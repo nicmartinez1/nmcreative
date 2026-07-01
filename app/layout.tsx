@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "NM Creative",
-  description: "Strategy. Design. Growth.",
+  title: "Web Skillet",
+  description: "Web design, social, ads, and SEO — cooked up together.",
 };
 
 export default function RootLayout({

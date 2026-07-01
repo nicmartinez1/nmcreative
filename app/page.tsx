@@ -1,380 +1,644 @@
-export default function Home() {
-  const offerPillars = [
-    {
-      number: "01",
-      title: "Build",
-      subtitle: "Custom websites",
-      text: "Premium websites designed to make your business look professional, communicate clearly, and turn visitors into leads.",
-      items: ["Custom design", "Responsive development", "SEO-ready foundation"],
-    },
-    {
-      number: "02",
-      title: "Rank",
-      subtitle: "Local SEO",
-      text: "Improve your visibility on Google so local customers can find your business when they are ready to buy.",
-      items: ["Google Business Profile", "Local keywords", "On-page SEO"],
-    },
-    {
-      number: "03",
-      title: "Grow",
-      subtitle: "Digital marketing",
-      text: "Campaigns, content, ads, and landing pages built to generate attention, traffic, and qualified leads.",
-      items: ["Paid ads", "Social media", "Landing pages"],
-    },
-    {
-      number: "04",
-      title: "Support",
-      subtitle: "Website care",
-      text: "Keep your website secure, updated, backed up, and running smoothly after launch.",
-      items: ["Hosting support", "Security updates", "Content edits"],
-    },
-  ];
+"use client";
 
-  const services = [
-    {
-      icon: "⌘",
-      title: "Custom Websites",
-      price: "Starting at $2,500",
-      text: "Premium websites designed around your brand, your goals, and the customers you want to attract.",
-      items: ["Custom design", "Responsive development", "SEO-ready foundation", "Lead capture forms", "Performance optimized"],
-      button: "Build My Website →",
-      tone: "blue",
-    },
-    {
-      icon: "↗",
-      title: "Marketing & Growth",
-      price: "Custom Strategy",
-      text: "SEO, paid ads, social media, landing pages, and campaigns built to generate measurable growth.",
-      items: ["Local SEO", "Paid advertising", "Social media management", "Landing pages", "Analytics & reporting"],
-      button: "Grow My Business →",
-      tone: "purple",
-    },
-    {
-      icon: "◎",
-      title: "Ongoing Partnership",
-      price: "Optional Support",
-      text: "Long-term support for businesses that want their website and marketing to keep improving after launch.",
-      items: ["Website updates", "Hosting support", "Security checks", "Monthly optimization", "Strategy calls"],
-      button: "Work With Us →",
-      tone: "teal",
-    },
-  ];
+import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import Link from "next/link";
+import "./globals.css";
 
-  const pricing = [
-    {
-      title: "Custom Website",
-      price: "$2,500",
-      text: "Perfect for businesses that need a polished, professional website built to make a strong first impression.",
-      items: ["5–8 pages", "Mobile responsive", "Contact forms", "Basic SEO setup", "Analytics", "Launch support"],
-      button: "Request Quote →",
-    },
-    {
-      title: "Business Website",
-      price: "$4,500",
-      text: "For businesses that need a stronger sales tool with better structure, more pages, and conversion-focused features.",
-      items: ["10–20 pages", "CMS or blog", "Booking integration", "Advanced SEO setup", "Landing pages", "Conversion optimization"],
-      button: "Build My Website →",
-      featured: true,
-    },
-    {
-      title: "Enterprise Platform",
-      price: "Quote",
-      text: "For businesses that need custom functionality, ecommerce, portals, integrations, or more advanced systems.",
-      items: ["Ecommerce", "Client portals", "Memberships", "Automations", "API integrations", "Ongoing consulting"],
-      button: "Let’s Talk →",
-    },
-  ];
+/* ==========================================================================
+   Web Skillet — single-file marketing page component
+   A shared ambient gradient and starfield sit behind the whole page, so the
+   sections read as one connected surface rather than stacked, separate
+   blocks.
+   ========================================================================== */
 
-  const growth = [
-    ["Local SEO", "Improve Google visibility and get found by local customers.", "$750/mo"],
-    ["Social Media", "Content planning, posting, brand building, and audience growth.", "$750/mo"],
-    ["Paid Advertising", "Google and Meta ads designed to generate qualified leads.", "$1,200/mo"],
-    ["Website Care", "Hosting, updates, backups, security, and technical support.", "$250/mo"],
-  ];
+/* ---------------------------------------------------------------------- */
+/* Scroll-reveal hook                                                      */
+/* ---------------------------------------------------------------------- */
 
-  const seo = [
-    ["Your Website", "We optimize your pages, structure, speed, and content."],
-    ["Google Search", "Customers search for the services you offer."],
-    ["Higher Rankings", "Your business appears higher for valuable search terms."],
-    ["More Traffic", "More qualified people visit your website."],
-    ["More Leads", "More calls, forms, bookings, and customers."],
-  ];
+function useReveal<T extends HTMLElement>(threshold = 0.2) {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
 
-  const process = [
-    ["Discovery", "We learn your business, goals, audience, and what needs to improve."],
-    ["Strategy", "We create the plan for your website, content, SEO, or campaign."],
-    ["Design", "We turn the strategy into a polished visual direction and user experience."],
-    ["Build", "We develop the website, landing pages, and systems behind the scenes."],
-    ["Launch", "We launch cleanly with tracking, SEO foundations, and support."],
-    ["Grow", "We optimize, improve, and help your business keep moving forward."],
-  ];
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, inView };
+}
+
+function Reveal({
+  as: Tag = "div",
+  id,
+  className = "",
+  style,
+  delay = 0,
+  children,
+}: {
+  as?: keyof React.JSX.IntrinsicElements;
+  id?: string;
+  className?: string;
+  style?: CSSProperties;
+  delay?: number;
+  children: ReactNode;
+}) {
+  const { ref, inView } = useReveal<HTMLDivElement>();
+  const Component = Tag as any;
+  return (
+    <Component
+      ref={ref}
+      id={id}
+      className={`${className} ${inView ? "ws-in-view" : ""}`}
+      style={{ transitionDelay: `${delay}ms`, ...style }}
+    >
+      {children}
+    </Component>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Count-up number for the results section                                 */
+/* ---------------------------------------------------------------------- */
+
+function CountUp({
+  to,
+  prefix = "",
+  suffix = "",
+  decimals = 0,
+  duration = 1500,
+}: {
+  to: number;
+  prefix?: string;
+  suffix?: string;
+  decimals?: number;
+  duration?: number;
+}) {
+  const { ref, inView } = useReveal<HTMLSpanElement>(0.5);
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let start: number | null = null;
+    let raf = 0;
+
+    const tick = (t: number) => {
+      if (start === null) start = t;
+      const progress = Math.min((t - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(to * eased);
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, to, duration]);
 
   return (
-    <main className="nmSite">
-      <header className="nmHeader">
-        <a href="#home" className="nmHeaderLogo">
-          <img src="/assets/nm-logo-mark.png" alt="NM Creative" />
-          <span>NM Creative</span>
-        </a>
+    <span ref={ref} className="ws-stat-number">
+      {prefix}
+      {value.toFixed(decimals)}
+      {suffix}
+    </span>
+  );
+}
 
-        <nav className="nmNav">
-          <a href="#home">Home</a>
-          <a href="#services">Services</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#seo">SEO</a>
-          <a href="#process">Process</a>
-          <a href="#contact">Contact</a>
-        </nav>
+/* ---------------------------------------------------------------------- */
+/* Expandable service card — bullets up front, full detail on demand       */
+/* ---------------------------------------------------------------------- */
 
-        <a href="#contact" className="nmHeaderCta">
-          Start Project →
+function ServiceCard({
+  index,
+  title,
+  bullets,
+  blurb,
+  icon,
+  color,
+  points,
+  delay,
+}: {
+  index: string;
+  title: string;
+  bullets: string[];
+  blurb: string;
+  icon: ReactNode;
+  color: string;
+  points: string;
+  delay: number;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <article
+      className="ws-card ws-in-view"
+      style={{ ["--card-color" as string]: color }}
+    >
+      <span className="ws-card-index">{index}</span>
+      <div className="ws-card-icon">{icon}</div>
+      <h3>{title}</h3>
+      <ul className="ws-card-bullets">
+        {bullets.map((b) => (
+          <li key={b}>{b}</li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        className="ws-card-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "Show less" : "More detail"}
+        <svg
+          className={`ws-card-chevron ${open ? "is-open" : ""}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <div className={`ws-card-detail ${open ? "is-open" : ""}`}>
+        <div>
+          <p>{blurb}</p>
+          <svg viewBox="0 0 200 70" preserveAspectRatio="none" className="ws-mini-chart-svg">
+            <polyline points={points} />
+          </svg>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Icons                                                                    */
+/* ---------------------------------------------------------------------- */
+
+const icon = {
+  design: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <rect x="3" y="4.5" width="18" height="15" rx="2.2" />
+      <path d="M3 8.5h18" strokeLinecap="round" />
+      <circle cx="6" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M7 13.5l3 3 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  social: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="6" cy="12" r="2.4" />
+      <circle cx="17.5" cy="5.5" r="2.4" />
+      <circle cx="17.5" cy="18.5" r="2.4" />
+      <path d="M8.1 10.8l7.4-4.2M8.1 13.2l7.4 4.2" strokeLinecap="round" />
+    </svg>
+  ),
+  ads: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 10v4a1 1 0 0 0 1 1h2l1.5 5H10l-1-5h2.5l6 3V6l-6 3H4a1 1 0 0 0-1 1z" strokeLinejoin="round" />
+      <path d="M18.5 9.5a4 4 0 0 1 0 5" strokeLinecap="round" />
+    </svg>
+  ),
+  seo: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.3 15.3L21 21" strokeLinecap="round" />
+      <path d="M7.5 11.5l1.8 1.8 3.2-3.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  pin: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21z" strokeLinejoin="round" />
+      <circle cx="12" cy="9.5" r="2.4" />
+    </svg>
+  ),
+  tap: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M9 12.5V6a1.6 1.6 0 0 1 3.2 0v5" strokeLinecap="round" />
+      <path d="M12.2 11V4.6a1.6 1.6 0 0 1 3.2 0V11" strokeLinecap="round" />
+      <path d="M15.4 11.2V6.4a1.6 1.6 0 0 1 3.2 0v7.6c0 3.9-2.4 7-6.2 7-2.6 0-4-1-5.4-2.8L4 14.8a1.5 1.5 0 0 1 2.3-1.9L9 15.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  trophy: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z" strokeLinejoin="round" />
+      <path d="M7 5H4.5A2.5 2.5 0 0 0 5.8 9.6M17 5h2.5a2.5 2.5 0 0 1-1.3 4.6" strokeLinecap="round" />
+      <path d="M12 13v3.5M8.5 20.5h7M9.5 20.5V17a2.5 2.5 0 0 1 5 0v3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  clock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
+/* ---------------------------------------------------------------------- */
+/* Content                                                                  */
+/* ---------------------------------------------------------------------- */
+
+const services = [
+  {
+    index: "01",
+    title: "Web Design",
+    color: "var(--accent)",
+    bullets: [
+      "Responsive on every device",
+      "Built to convert, not just look nice",
+      "Live in weeks, not quarters",
+    ],
+    blurb:
+      "Fast, responsive sites built around how people actually shop — not how they look frozen in a mockup.",
+    icon: icon.design,
+    points: "0,60 40,58 80,50 120,42 160,28 200,10",
+  },
+  {
+    index: "02",
+    title: "Social Media Management",
+    color: "var(--accent-2)",
+    bullets: [
+      "Content calendars & scheduling",
+      "Real replies, real voice",
+      "Consistent across every platform",
+    ],
+    blurb:
+      "Content calendars, real replies, and a voice that actually sounds like you — consistent everywhere, built to turn followers into visitors.",
+    icon: icon.social,
+    points: "0,65 40,60 80,55 120,38 160,22 200,12",
+  },
+  {
+    index: "03",
+    title: "Ad Campaigns",
+    color: "var(--growth-soft)",
+    bullets: [
+      "Search & social campaigns",
+      "Tested and retuned monthly",
+      "Every dollar tracked",
+    ],
+    blurb:
+      "Paid search and social campaigns that get tested, measured, and retuned until every dollar you spend is earning its place.",
+    icon: icon.ads,
+    points: "0,62 40,64 80,52 120,44 160,30 200,14",
+  },
+  {
+    index: "04",
+    title: "SEO Optimization",
+    color: "var(--neon-blue)",
+    bullets: [
+      "Technical fixes & audits",
+      "On-page content strategy",
+      "Link building that lasts",
+    ],
+    blurb:
+      "Technical fixes, on-page content, and link building aimed at one thing: showing up on the page people actually scroll — and converting that visibility into sales.",
+    icon: icon.seo,
+    points: "0,68 40,62 80,50 120,36 160,20 200,8",
+  },
+];
+
+const localBenefits = [
+  {
+    title: "Show up before they walk in",
+    body: "Most people search a business online before ever visiting — hours, reviews, photos. A real site puts you in that decision before they reach your door.",
+    icon: icon.pin,
+  },
+  {
+    title: "Turn searches into foot traffic",
+    body: "Directions, services, and a clear way to book or call turn an online search into someone walking through your actual front door.",
+    icon: icon.tap,
+  },
+  {
+    title: "Compete with the chains",
+    body: "Local SEO lets a single-location shop outrank national chains for the searches that actually matter in its own neighborhood.",
+    icon: icon.trophy,
+  },
+  {
+    title: "Sell after you've locked up",
+    body: "Online booking, ordering, or even just a contact form that works at 9pm keeps you making sales while the lights are off.",
+    icon: icon.clock,
+  },
+];
+
+const processSteps = [
+  { label: "Scan", title: "Audit", body: "We look at your current site, traffic, and channels to find what's actually holding growth back." },
+  { label: "Blueprint", title: "Plan", body: "A prioritized roadmap across design, content, and campaigns — scoped to your budget, not ours." },
+  { label: "Build", title: "Build & launch", body: "Design, copy, and campaigns go live in weeks, not quarters, with you reviewing at every stage." },
+  { label: "Ship", title: "Optimize", body: "Monthly reporting and iteration, so traffic, engagement, and sales keep compounding after launch." },
+];
+
+/* ---------------------------------------------------------------------- */
+/* Page                                                                     */
+/* ---------------------------------------------------------------------- */
+
+export default function WebSkillet() {
+  return (
+    <div className="ws-root">
+      <nav className="ws-nav">
+        <a href="#top" className="ws-logo">
+          <span className="ws-logo-crop">
+            <img src="/assets/webskilletlogo.png" alt="Web Skillet" className="ws-logo-full" />
+          </span>
         </a>
+        <ul className="ws-nav-links">
+          <li><Link href="/">Home</Link></li>
+          <li><Link href="/examples">Examples</Link></li>
+          <li><Link href="/about">About</Link></li>
+          <li><Link href="/contact">Contact</Link></li>
+        </ul>
+        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
+      </nav>
+
+      <header id="top" className="ws-hero">
+        <div className="ws-hero-bg" aria-hidden="true">
+          <img
+            className="ws-hero-bg-img"
+            src="/assets/hero-final.png"
+            alt=""
+          />
+          <div className="ws-hero-bg-scrim" />
+          <div className="ws-hero-shine" aria-hidden="true" />
+          <div className="ws-hero-glow-pulse" aria-hidden="true" />
+        </div>
+
+        <div className="ws-section ws-hero-inner">
+          <div className="ws-hero-copy">
+            <Reveal className="ws-eyebrow">Web design · social · ads · SEO</Reveal>
+            <Reveal delay={80}>
+              <h1>
+                Growth isn&rsquo;t luck. <em>It&rsquo;s built.</em>
+              </h1>
+            </Reveal>
+            <Reveal delay={140} className="ws-hero-kicker">
+              Line by line. Post by post. Click by click.
+            </Reveal>
+            <Reveal delay={200} className="ws-hero-sub">
+              Web Skillet is the studio that builds all three at once — so your
+              site, your feed, and your search rankings stop working against
+              each other and start compounding.
+            </Reveal>
+            <Reveal delay={240} className="ws-hero-actions">
+              <Link href="/contact" className="ws-btn-primary">
+                Start your build
+              </Link>
+              <a href="#services" className="ws-btn-ghost">
+                See the stack ↓
+              </a>
+            </Reveal>
+            <Reveal delay={320} className="ws-hero-note">
+              No long-term contracts · Free consult
+            </Reveal>
+          </div>
+        </div>
       </header>
 
-      <section className="nmHero" id="home">
-        <img
-          src="/assets/hero-full.png"
-          alt="NM Creative glowing 3D logo"
-          className="heroBackground"
-        />
-
-        <div className="nmHeroContent">
-          <span className="eyebrow">Strategy. Design. Marketing.</span>
-
-          <h1>
-            Growth isn’t luck.
-            <br />
-            It’s <em>designed.</em>
-          </h1>
-
+      <section id="services" className="ws-section ws-services">
+        <div className="ws-glow-orb" style={{ top: "-4rem", left: "8%", width: "260px", height: "260px", ["--orb-color" as string]: "var(--accent-2)" }} />
+        <div className="ws-glow-orb" style={{ bottom: "-6rem", right: "6%", width: "220px", height: "220px", animationDelay: "2s", ["--orb-color" as string]: "var(--accent)" }} />
+        <Reveal
+          className="ws-float-chip"
+          style={{ top: "1rem", right: "calc(-50vw + 736px)", ["--chip-color" as string]: "var(--accent-2)" }}
+        >
+          ↑ 2.6× social traffic
+        </Reveal>
+        <Reveal
+          className="ws-float-chip"
+          delay={200}
+          style={{ top: "9.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s", ["--chip-color" as string]: "var(--accent)" }}
+        >
+          → Live in 2 weeks
+        </Reveal>
+        <Reveal className="ws-section-head">
+          <span className="ws-eyebrow" style={{ color: "var(--accent-2)" }}>The stack</span>
+          <h2>Designed to convert. Built to <em style={{ color: "var(--accent-2)" }}>rank</em>.</h2>
           <p>
-            We build premium websites and marketing systems that help businesses
-            attract better customers, increase revenue, and scale with confidence.
+            Great design means nothing if no one finds it. We build your site
+            and your SEO together from day one — so they're never fighting
+            each other — then bring social and ads in to amplify what's
+            already working.
           </p>
-
-          <div className="heroButtons">
-            <a href="#contact" className="primaryButton">Start Your Project →</a>
-            <a href="#pricing" className="secondaryButton">View Pricing</a>
-          </div>
-
-          <div className="trustStrip">
-            <div>
-              <b>✣</b>
-              <span>Free Consultation<small>No obligation</small></span>
-            </div>
-            <div>
-              <b>◎</b>
-              <span>Custom Strategy<small>Tailored to you</small></span>
-            </div>
-            <div>
-              <b>↗</b>
-              <span>Built for Growth<small>Results that scale</small></span>
-            </div>
-          </div>
+        </Reveal>
+        <div className="ws-services-grid">
+          {services.map((s, i) => (
+            <ServiceCard
+              key={s.title}
+              index={s.index}
+              title={s.title}
+              bullets={s.bullets}
+              blurb={s.blurb}
+              icon={s.icon}
+              color={s.color}
+              points={s.points}
+              delay={i * 90}
+            />
+          ))}
         </div>
       </section>
 
-      <section className="offerSection">
-        <div className="offerPanel">
-          <div className="offerIntro">
-            <span className="eyebrow">What NM Creative Offers</span>
-            <h2>
-              A complete digital foundation for businesses that want to <em>look better, get found, and grow.</em>
-            </h2>
-            
-          </div>
+      <section id="results" className="ws-section ws-results">
+        <div className="ws-glow-orb" style={{ top: "-3rem", right: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--growth-soft)" }} />
+        <div className="ws-glow-orb" style={{ bottom: "4rem", left: "4%", width: "200px", height: "200px", animationDelay: "1.5s", ["--orb-color" as string]: "var(--accent)" }} />
+        <Reveal
+          className="ws-float-chip"
+          style={{ top: "2.5rem", left: "calc(-50vw + 736px)", ["--chip-color" as string]: "var(--growth-soft)" }}
+        >
+          ⚡ Compounds every month
+        </Reveal>
+        <Reveal
+          className="ws-float-chip"
+          delay={200}
+          style={{ top: "12rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s", ["--chip-color" as string]: "var(--accent)" }}
+        >
+          No guesswork, just tracked results
+        </Reveal>
+        <Reveal className="ws-section-head">
+          <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>
+            The result
+          </span>
+          <h2>SEO and social don't just build an audience. They build <em style={{ color: "var(--growth-soft)" }}>revenue</em>.</h2>
+          <p>
+            A beautiful site nobody finds is just expensive wallpaper. Pair
+            it with real SEO and a social presence that actually posts, and
+            traffic, followers, and sales tend to start climbing at the same
+            time — here's what that curve usually looks like.
+          </p>
+        </Reveal>
 
-          <div className="offerGrid">
-            {offerPillars.map((pillar) => (
-              <article className="offerCard" key={pillar.title}>
-                <span>{pillar.number}</span>
-                <h3>{pillar.title}</h3>
-                <strong>{pillar.subtitle}</strong>
-                <p>{pillar.text}</p>
-                <ul>
-                  {pillar.items.map((item) => <li key={item}>{item}</li>)}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="nmSection servicesSection" id="services">
-        <div className="sectionTitle">
-          <span className="eyebrow">What We Do</span>
-          <h2>Complete solutions. <em>Real results.</em></h2>
-        </div>
-
-        <div className="servicesGrid">
-          {services.map((service) => (
-            <article className={`serviceCard ${service.tone}`} key={service.title}>
-              <div className="cardHeader">
-                <div className="cardIcon">{service.icon}</div>
-                <button type="button">+</button>
+        <div className="ws-results-grid">
+          <Reveal>
+            <div className="ws-chart-card">
+              <div className="ws-chart-label-row">
+                <span>Traffic & sales, indexed</span>
+                <span>Projected, 6 months</span>
               </div>
+              <svg className="ws-chart-svg" viewBox="0 0 420 200">
+                <line x1="150" y1="10" x2="150" y2="170" className="ws-chart-divider" />
+                <text x="18" y="188" className="ws-chart-mark">Before</text>
+                <text x="160" y="188" className="ws-chart-mark">Web Skillet begins</text>
+                <text x="360" y="188" className="ws-chart-mark">Month 6</text>
 
-              <h3>{service.title}</h3>
-              <strong>{service.price}</strong>
-              <p>{service.text}</p>
-
-              <ul>
-                {service.items.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-
-              <a href="#contact">{service.button}</a>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="nmSection pricingSection" id="pricing">
-        <div className="sectionTitle">
-          <span className="eyebrow">Website Investment</span>
-          <h2>Choose the right website for your business.</h2>
-        </div>
-
-        <div className="pricingGrid">
-          {pricing.map((plan) => (
-            <article className={`priceCard ${plan.featured ? "featured" : ""}`} key={plan.title}>
-              {plan.featured && <span className="popularBadge">Most Popular</span>}
-              <button className="miniButton" type="button">+</button>
-
-              <h3>{plan.title}</h3>
-              <small>Starting at</small>
-              <strong>{plan.price}</strong>
-              <p>{plan.text}</p>
-
-              <ul>
-                {plan.items.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-
-              <a href="#contact">{plan.button}</a>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="seoSection" id="seo">
-        <div className="seoPanel">
-          <div className="seoIntro">
-            <div className="seoOrb">SEO</div>
-
-            <div>
-              <span className="eyebrow">How SEO Works</span>
-              <h2>More visibility. More traffic. More customers.</h2>
-              <p>
-                SEO helps your business show up when customers search on Google.
-                We improve your website, local presence, page structure, and
-                content so more qualified people can find and contact you.
-              </p>
+                <polyline
+                  className="ws-chart-line"
+                  points="10,150 80,148 150,150 220,120 290,80 360,40 410,22"
+                />
+                <polyline
+                  className="ws-chart-line ws-accent"
+                  points="10,165 80,164 150,163 220,150 290,138 360,120 410,108"
+                />
+              </svg>
+              <div className="ws-chart-label-row" style={{ marginTop: "0.75rem" }}>
+                <span style={{ color: "var(--growth-soft)" }}>● Social & search traffic</span>
+                <span style={{ color: "var(--accent)" }}>● Sales</span>
+              </div>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="seoFlow">
-            {seo.map(([title, text], index) => (
-              <article className="seoStep" key={title}>
-                <span>{index + 1}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
+          <div className="ws-stats-list">
+            <Reveal className="ws-stat" delay={0}>
+              <CountUp to={3.2} decimals={1} suffix="×" />
+              <p>
+                <span className="ws-stat-title">Organic search traffic</span>
+                What search traffic looks like six months after we stop
+                guessing and start optimizing.
+              </p>
+            </Reveal>
+            <Reveal className="ws-stat" delay={100}>
+              <CountUp to={2.6} decimals={1} suffix="×" />
+              <p>
+                <span className="ws-stat-title">Social media traffic</span>
+                What happens when your Instagram bio link finally leads
+                somewhere worth clicking.
+              </p>
+            </Reveal>
+            <Reveal className="ws-stat" delay={200}>
+              <CountUp to={47} suffix="%" />
+              <p>
+                <span className="ws-stat-title">Sales growth</span>
+                The number that actually matters, once that traffic lands
+                somewhere built to close the sale.
+              </p>
+            </Reveal>
+          </div>
+        </div>
+
+        <Reveal as="div" id="process" className="ws-process">
+          {processSteps.map((step, i) => (
+            <div className="ws-process-step" key={step.title}>
+              <span className="ws-eyebrow">{step.label}</span>
+              <h4>{step.title}</h4>
+              <p>{step.body}</p>
+            </div>
+          ))}
+        </Reveal>
+      </section>
+
+      <section id="local" className="ws-section ws-local">
+        <div className="ws-glow-orb" style={{ top: "-3rem", left: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--neon-blue)" }} />
+        <div className="ws-glow-orb" style={{ bottom: "2rem", right: "6%", width: "220px", height: "220px", animationDelay: "1.8s", ["--orb-color" as string]: "var(--accent-2)" }} />
+        <Reveal
+          className="ws-float-chip"
+          style={{ top: "1.25rem", right: "calc(-50vw + 780px)", ["--chip-color" as string]: "var(--neon-blue)" }}
+        >
+          ● Found on Google Maps
+        </Reveal>
+        <Reveal
+          className="ws-float-chip"
+          delay={200}
+          style={{ top: "10.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s", ["--chip-color" as string]: "var(--accent-2)" }}
+        >
+          Open for business, 24/7 online
+        </Reveal>
+        <Reveal className="ws-section-head">
+          <span className="ws-eyebrow" style={{ color: "var(--neon-blue)" }}>For local businesses</span>
+          <h2>Your storefront closes at 6pm. Your website <em style={{ color: "var(--neon-blue)" }}>shouldn&rsquo;t</em>.</h2>
+          <p>
+            A great location still matters — but the search happens before
+            the visit. Brick-and-mortar businesses with a real online
+            presence get found, get chosen, and get paid, even when the
+            doors are locked.
+          </p>
+        </Reveal>
+
+        <div className="ws-local-grid">
+          <div className="ws-local-list">
+            {localBenefits.map((b, i) => (
+              <Reveal as="div" key={b.title} className="ws-local-item" delay={i * 90}>
+                <span className="ws-local-item-icon">{b.icon}</span>
+                <div>
+                  <h4>{b.title}</h4>
+                  <p>{b.body}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
+
+          <Reveal delay={180}>
+            <div className="ws-local-card">
+              <div className="ws-local-card-stat">
+                <strong>76%</strong>
+                <span>
+                  Of people who search for a local business on their phone
+                  visit it within a day.
+                </span>
+              </div>
+              <div className="ws-local-card-stat">
+                <strong>3.7×</strong>
+                <span>
+                  More likely a customer trusts a business enough to buy once
+                  it has a real, working website.
+                </span>
+              </div>
+              <div className="ws-local-card-stat">
+                <strong>28%</strong>
+                <span>
+                  Projected lift in foot traffic once a local site and search
+                  listing are actually optimized.
+                </span>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="growthSection">
-        <div className="sectionTitle">
-          <span className="eyebrow">Keep Growing After Launch</span>
-          <h2>Ongoing <em>growth services.</em></h2>
-        </div>
-
-        <div className="growthGrid">
-          {growth.map(([title, text, price], index) => (
-            <article className={`growthCard tone${index + 1}`} key={title}>
-              <button type="button">+</button>
-              <h3>{title}</h3>
-              <p>{text}</p>
-              <span>Starting at</span>
-              <strong>{price}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="processSection" id="process">
-        <div className="sectionTitle">
-          <span className="eyebrow">Our Process</span>
-          <h2>A proven process for predictable results.</h2>
-        </div>
-
-        <div className="processTrack">
-          {process.map(([title, text], index) => (
-            <article className="processStep" key={title}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="ctaSection" id="contact">
-        <div className="ctaPanel">
-          <div>
-            <h2>Ready to grow your business?</h2>
-            <p>Let’s build something amazing together.</p>
-          </div>
-
-          <div className="ctaButtons">
-            <a href="mailto:hello@nmcreative.co" className="ctaWhite">Start Your Project →</a>
-            <a href="mailto:hello@nmcreative.co" className="ctaOutline">Schedule a Call</a>
-          </div>
-        </div>
-      </section>
-
-      <footer className="nmFooter">
-        <div>
-          <img src="/assets/nm-logo-mark.png" alt="NM Creative" />
+      <section id="contact" className="ws-section ws-cta">
+        <div className="ws-glow-orb" style={{ top: "-2rem", left: "14%", width: "220px", height: "220px", ["--orb-color" as string]: "var(--accent)" }} />
+        <div className="ws-glow-orb" style={{ bottom: "-2rem", right: "12%", width: "220px", height: "220px", animationDelay: "2.4s", ["--orb-color" as string]: "var(--accent-2)" }} />
+        <Reveal>
+          <span className="ws-eyebrow">Let's get building</span>
+        </Reveal>
+        <Reveal delay={80} as="h2">
+          Growth isn&rsquo;t going to build itself.
+        </Reveal>
+        <Reveal delay={160}>
           <p>
-            We build premium websites and marketing systems that help businesses
-            grow with confidence.
+            Tell us what you're working with — we'll reply with a plan, not a
+            sales pitch.
           </p>
-        </div>
+        </Reveal>
+        <Reveal delay={240} className="ws-cta-actions">
+          <Link href="/contact" className="ws-btn-primary">
+            Book a free consult
+          </Link>
+        </Reveal>
+      </section>
 
-        <div>
-          <h3>Quick Links</h3>
-          <a href="#home">Home</a>
-          <a href="#services">Services</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#process">Our Process</a>
-          <a href="#contact">Contact</a>
-        </div>
-
-        <div>
-          <h3>Services</h3>
-          <a href="#services">Custom Websites</a>
-          <a href="#seo">Local SEO</a>
-          <a href="#services">Digital Marketing</a>
-          <a href="#services">Website Care</a>
-        </div>
-
-        <div>
-          <h3>Contact</h3>
-          <a href="mailto:hello@nmcreative.co">hello@nmcreative.co</a>
-          <a href="tel:5551234567">(555) 123-4567</a>
-          <p>Los Angeles, CA</p>
-        </div>
-
-        <div>
-          <h3>Stay Updated</h3>
-          <p>Get tips, insights, and updates delivered to your inbox.</p>
-          <form>
-            <input placeholder="Your email" />
-            <button type="button">→</button>
-          </form>
-        </div>
+      <footer className="ws-footer">
+        <span className="ws-footer-brand">
+          <span className="ws-logo-crop ws-logo-crop-sm">
+            <img src="/assets/webskilletlogo.png" alt="" className="ws-logo-full" />
+          </span>
+          © {new Date().getFullYear()} Web Skillet
+        </span>
+        <span>Web design · Social · Ads · SEO</span>
       </footer>
-    </main>
+    </div>
   );
 }
