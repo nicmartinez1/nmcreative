@@ -35,7 +35,7 @@ function Reveal({
   children,
   ...rest
 }: {
-  as?: keyof React.JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements | React.ComponentType<any>;
   className?: string;
   style?: CSSProperties;
   delay?: number;
