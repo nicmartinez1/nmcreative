@@ -71,11 +71,8 @@ function Reveal({
 /* Spiky comic-book callout chip (SVG shape, true 3D offset copy behind)   */
 /* ---------------------------------------------------------------------- */
 
-const SPIKY_BODY_PATH =
+const SPIKY_PATH =
   "M 150,3 L 186.6,11.8 L 230,11.3 L 248.2,25.5 L 284.6,33.4 L 278.7,48.6 L 296.5,62.4 L 268.3,73.7 L 261.9,89.1 L 220.3,92.9 L 191.7,104.9 L 150,100 L 108.3,104.9 L 79.7,92.9 L 38.1,89.1 L 31.7,73.7 L 3.5,62.4 L 21.3,48.6 L 15.4,33.4 L 51.8,25.5 L 70,11.3 L 113.4,11.8 Z";
-const SPIKY_PATH = `${SPIKY_BODY_PATH} M 92,94 L 58,133 L 101,98 Z`;
-const SHADOW_PATH =
-  "M 150,5 L 220.5,22.6 L 288.9,39.5 L 264.1,67.4 L 235.8,95.5 L 150,95 L 64.2,95.5 L 35.9,67.4 L 11.1,39.5 L 79.5,22.6 Z";
 
 function SpikyChip({
   color,
@@ -94,10 +91,10 @@ function SpikyChip({
       delay={delay}
       style={{ ["--chip-color" as string]: color, ...style }}
     >
-      <svg className="ws-float-chip-shadow" viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true">
-        <path d={SHADOW_PATH} />
+      <svg className="ws-float-chip-shadow" viewBox="0 3 300 104" preserveAspectRatio="none" aria-hidden="true">
+        <path d={SPIKY_PATH} />
       </svg>
-      <svg className="ws-float-chip-body" viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true">
+      <svg className="ws-float-chip-body" viewBox="0 3 300 104" preserveAspectRatio="none" aria-hidden="true">
         <path d={SPIKY_PATH} />
       </svg>
       <span className="ws-float-chip-text">{children}</span>
@@ -493,7 +490,7 @@ export default function WebSkillet() {
         <SpikyChip
           color="var(--accent)"
           delay={200}
-          style={{ top: "5.5rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s" }}
+          style={{ top: "1rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s" }}
         >
           No guesswork, just tracked results
         </SpikyChip>

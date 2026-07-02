@@ -664,7 +664,7 @@ body {
 .ws-float-chip {
   position: absolute;
   z-index: 1;
-  padding: 1.1rem 1.9rem 1.6rem 1.6rem;
+  padding: 1.3rem 2.2rem;
   opacity: 0;
   animation: ws-chip-pop 4.5s ease-in-out infinite;
   transition: opacity 0.7s ease;
@@ -681,14 +681,17 @@ body {
 
 .ws-float-chip-shadow {
   z-index: -2;
-  transform: translate(10px, 10px);
+  transform: translate(9px, 9px);
 }
 
 .ws-float-chip-body {
   z-index: -1;
 }
 
-.ws-float-chip-shadow path,
+.ws-float-chip-shadow path {
+  fill: var(--paper);
+}
+
 .ws-float-chip-body path {
   fill: var(--chip-color, var(--accent));
   stroke: var(--paper);
@@ -701,7 +704,9 @@ body {
 .ws-float-chip-text {
   position: relative;
   z-index: 1;
-  display: block;
+  display: flex;
+  justify-content: center;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 0.92rem;
   font-weight: 700;
