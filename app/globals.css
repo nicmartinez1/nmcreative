@@ -516,11 +516,11 @@ body {
     position: relative;
     inset: auto;
     width: 100%;
-    aspect-ratio: 1536 / 1024;
+    aspect-ratio: 1 / 1;
   }
 
   .ws-hero-bg-img {
-    object-position: center;
+    object-position: 75% 46%;
   }
 
   .ws-hero-bg-scrim {
