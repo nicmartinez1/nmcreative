@@ -681,18 +681,6 @@ body {
   transition: opacity 0.7s ease;
 }
 
-.ws-float-chip::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 14px;
-  height: 14px;
-  background: var(--chip-color, var(--accent));
-  border: 2.5px solid var(--paper);
-  border-radius: 50%;
-}
-
 .ws-float-chip.ws-in-view {
   opacity: 1;
 }

@@ -412,7 +412,7 @@ export default function WebSkillet() {
         <Reveal
           className="ws-float-chip"
           delay={200}
-          style={{ top: "9.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s", ["--chip-color" as string]: "var(--accent)" }}
+          style={{ top: "5.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s", ["--chip-color" as string]: "var(--accent)" }}
         >
           → Live in 2 weeks
         </Reveal>
@@ -455,7 +455,7 @@ export default function WebSkillet() {
         <Reveal
           className="ws-float-chip"
           delay={200}
-          style={{ top: "12rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s", ["--chip-color" as string]: "var(--accent)" }}
+          style={{ top: "5.5rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s", ["--chip-color" as string]: "var(--accent)" }}
         >
           No guesswork, just tracked results
         </Reveal>
@@ -552,7 +552,7 @@ export default function WebSkillet() {
         <Reveal
           className="ws-float-chip"
           delay={200}
-          style={{ top: "10.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s", ["--chip-color" as string]: "var(--accent-2)" }}
+          style={{ top: "5.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s", ["--chip-color" as string]: "var(--accent-2)" }}
         >
           Open for business, 24/7 online
         </Reveal>
