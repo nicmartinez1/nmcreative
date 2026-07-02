@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import Link from "next/link";
+import SiteNav from "./components/SiteNav";
 import "./globals.css";
 
 /* ==========================================================================
@@ -68,13 +69,10 @@ function Reveal({
 }
 
 /* ---------------------------------------------------------------------- */
-/* Spiky comic-book callout chip (SVG shape, true 3D offset copy behind)   */
+/* Floating stat chip — modern chat-bubble style                          */
 /* ---------------------------------------------------------------------- */
 
-const SPIKY_PATH =
-  "M 150,3 L 186.6,11.8 L 230,11.3 L 248.2,25.5 L 284.6,33.4 L 278.7,48.6 L 296.5,62.4 L 268.3,73.7 L 261.9,89.1 L 220.3,92.9 L 191.7,104.9 L 150,100 L 108.3,104.9 L 79.7,92.9 L 38.1,89.1 L 31.7,73.7 L 3.5,62.4 L 21.3,48.6 L 15.4,33.4 L 51.8,25.5 L 70,11.3 L 113.4,11.8 Z";
-
-function SpikyChip({
+function FloatChip({
   color,
   style,
   delay,
@@ -91,13 +89,13 @@ function SpikyChip({
       delay={delay}
       style={{ ["--chip-color" as string]: color, ...style }}
     >
-      <svg className="ws-float-chip-shadow" viewBox="0 3 300 104" preserveAspectRatio="none" aria-hidden="true">
-        <path d={SPIKY_PATH} />
-      </svg>
-      <svg className="ws-float-chip-body" viewBox="0 3 300 104" preserveAspectRatio="none" aria-hidden="true">
-        <path d={SPIKY_PATH} />
-      </svg>
-      <span className="ws-float-chip-text">{children}</span>
+      <span className="ws-chip-sizzle ws-chip-sizzle-1" aria-hidden="true" />
+      <span className="ws-chip-sizzle ws-chip-sizzle-2" aria-hidden="true" />
+      <span className="ws-chip-sizzle ws-chip-sizzle-3" aria-hidden="true" />
+      <span className="ws-chip-sizzle ws-chip-sizzle-4" aria-hidden="true" />
+      <span className="ws-chip-sizzle ws-chip-sizzle-5" aria-hidden="true" />
+      <span className="ws-chip-sizzle ws-chip-sizzle-6" aria-hidden="true" />
+      {children}
     </Reveal>
   );
 }
@@ -186,6 +184,23 @@ function ServiceCard({
           <li key={b}>{b}</li>
         ))}
       </ul>
+      <div className={`ws-card-detail ${open ? "is-open" : ""}`}>
+        <div>
+          <p>{blurb}</p>
+          <svg viewBox="0 0 220 88" className="ws-mini-chart-svg">
+            <line x1="34" y1="6" x2="34" y2="62" className="ws-mini-chart-axis" />
+            <line x1="34" y1="62" x2="210" y2="62" className="ws-mini-chart-axis" />
+            <text x="10" y="34" className="ws-mini-chart-label" transform="rotate(-90 10 34)">
+              Growth
+            </text>
+            <text x="34" y="78" className="ws-mini-chart-label">Month 1</text>
+            <text x="210" y="78" className="ws-mini-chart-label" textAnchor="end">Month 6</text>
+            <g transform="translate(34 6) scale(0.88 0.8)">
+              <polyline points={points} />
+            </g>
+          </svg>
+        </div>
+      </div>
       <button
         type="button"
         className="ws-card-toggle"
@@ -203,14 +218,6 @@ function ServiceCard({
           <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      <div className={`ws-card-detail ${open ? "is-open" : ""}`}>
-        <div>
-          <p>{blurb}</p>
-          <svg viewBox="0 0 200 70" preserveAspectRatio="none" className="ws-mini-chart-svg">
-            <polyline points={points} />
-          </svg>
-        </div>
-      </div>
     </article>
   );
 }
@@ -292,7 +299,7 @@ const services = [
       "Live in weeks, not quarters",
     ],
     blurb:
-      "Fast, responsive sites built around how people actually shop — not how they look frozen in a mockup.",
+      "Fast, responsive sites built around how people actually shop, not how they look frozen in a mockup.",
     icon: icon.design,
     points: "0,60 40,58 80,50 120,42 160,28 200,10",
   },
@@ -306,7 +313,7 @@ const services = [
       "Consistent across every platform",
     ],
     blurb:
-      "Content calendars, real replies, and a voice that actually sounds like you — consistent everywhere, built to turn followers into visitors.",
+      "Content calendars, real replies, and a voice that actually sounds like you, consistent everywhere, built to turn followers into visitors.",
     icon: icon.social,
     points: "0,65 40,60 80,55 120,38 160,22 200,12",
   },
@@ -315,12 +322,12 @@ const services = [
     title: "Ad Campaigns",
     color: "var(--growth-soft)",
     bullets: [
-      "Search & social campaigns",
+      "Search & social media campaigns",
       "Tested and retuned monthly",
       "Every dollar tracked",
     ],
     blurb:
-      "Paid search and social campaigns that get tested, measured, and retuned until every dollar you spend is earning its place.",
+      "Paid search and social media campaigns that get tested, measured, and retuned until every dollar you spend is earning its place.",
     icon: icon.ads,
     points: "0,62 40,64 80,52 120,44 160,30 200,14",
   },
@@ -334,7 +341,7 @@ const services = [
       "Link building that lasts",
     ],
     blurb:
-      "Technical fixes, on-page content, and link building aimed at one thing: showing up on the page people actually scroll — and converting that visibility into sales.",
+      "Technical fixes, on-page content, and link building aimed at one thing: showing up on the page people actually scroll, and converting that visibility into sales.",
     icon: icon.seo,
     points: "0,68 40,62 80,50 120,36 160,20 200,8",
   },
@@ -343,7 +350,7 @@ const services = [
 const localBenefits = [
   {
     title: "Show up before they walk in",
-    body: "Most people search a business online before ever visiting — hours, reviews, photos. A real site puts you in that decision before they reach your door.",
+    body: "Most people search a business online before ever visiting: hours, reviews, photos. A real site puts you in that decision before they reach your door.",
     icon: icon.pin,
   },
   {
@@ -365,7 +372,7 @@ const localBenefits = [
 
 const processSteps = [
   { label: "Scan", title: "Audit", body: "We look at your current site, traffic, and channels to find what's actually holding growth back." },
-  { label: "Blueprint", title: "Plan", body: "A prioritized roadmap across design, content, and campaigns — scoped to your budget, not ours." },
+  { label: "Blueprint", title: "Plan", body: "A prioritized roadmap across design, content, and campaigns, scoped to your budget, not ours." },
   { label: "Build", title: "Build & launch", body: "Design, copy, and campaigns go live in weeks, not quarters, with you reviewing at every stage." },
   { label: "Ship", title: "Optimize", body: "Monthly reporting and iteration, so traffic, engagement, and sales keep compounding after launch." },
 ];
@@ -377,20 +384,7 @@ const processSteps = [
 export default function WebSkillet() {
   return (
     <div className="ws-root">
-      <nav className="ws-nav">
-        <a href="#top" className="ws-logo">
-          <span className="ws-logo-crop">
-            <img src="/assets/webskilletlogo.png" alt="Web Skillet" className="ws-logo-full" />
-          </span>
-        </a>
-        <ul className="ws-nav-links">
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/examples">Examples</Link></li>
-          <li><Link href="/about">About</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
-        </ul>
-        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
-      </nav>
+      <SiteNav logoHref="#top" />
 
       <header id="top" className="ws-hero">
         <div className="ws-hero-bg" aria-hidden="true">
@@ -406,17 +400,17 @@ export default function WebSkillet() {
 
         <div className="ws-section ws-hero-inner">
           <div className="ws-hero-copy">
-            <Reveal className="ws-eyebrow">Web design · social · ads · SEO</Reveal>
+            <Reveal className="ws-eyebrow ws-eyebrow-plain">Web design · social media · ads · SEO</Reveal>
             <Reveal delay={80}>
               <h1>
                 Growth isn&rsquo;t luck. <em>It&rsquo;s built.</em>
               </h1>
             </Reveal>
             <Reveal delay={140} className="ws-hero-kicker">
-              Line by line. Post by post. Click by click.
+              Built page by page. Grown post by post. Proven click by click.
             </Reveal>
             <Reveal delay={200} className="ws-hero-sub">
-              Web Skillet is the studio that builds all three at once — so your
+              Web Skillet is the studio that builds all three at once, so your
               site, your feed, and your search rankings stop working against
               each other and start compounding.
             </Reveal>
@@ -438,26 +432,26 @@ export default function WebSkillet() {
       <section id="services" className="ws-section ws-services">
         <div className="ws-glow-orb" style={{ top: "-4rem", left: "8%", width: "260px", height: "260px", ["--orb-color" as string]: "var(--accent-2)" }} />
         <div className="ws-glow-orb" style={{ bottom: "-6rem", right: "6%", width: "220px", height: "220px", animationDelay: "2s", ["--orb-color" as string]: "var(--accent)" }} />
-        <SpikyChip
+        <FloatChip
           color="var(--accent-2)"
           style={{ top: "1rem", right: "calc(-50vw + 736px)" }}
         >
-          ↑ 2.6× social traffic
-        </SpikyChip>
-        <SpikyChip
+          Social traffic grows 2.6× in six months.
+        </FloatChip>
+        <FloatChip
           color="var(--accent)"
           delay={200}
           style={{ top: "5.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s" }}
         >
-          → Live in 2 weeks
-        </SpikyChip>
+          Most new sites go live in just two weeks.
+        </FloatChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--accent-2)" }}>The stack</span>
           <h2>Designed to convert. Built to <em style={{ color: "var(--accent-2)" }}>rank</em>.</h2>
           <p>
             Great design means nothing if no one finds it. We build your site
-            and your SEO together from day one — so they're never fighting
-            each other — then bring social and ads in to amplify what's
+            and your SEO together from day one, so they're never fighting
+            each other, then bring social media and ads in to amplify what's
             already working.
           </p>
         </Reveal>
@@ -481,29 +475,29 @@ export default function WebSkillet() {
       <section id="results" className="ws-section ws-results">
         <div className="ws-glow-orb" style={{ top: "-3rem", right: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--growth-soft)" }} />
         <div className="ws-glow-orb" style={{ bottom: "4rem", left: "4%", width: "200px", height: "200px", animationDelay: "1.5s", ["--orb-color" as string]: "var(--accent)" }} />
-        <SpikyChip
+        <FloatChip
           color="var(--growth-soft)"
           style={{ top: "2.5rem", left: "calc(-50vw + 736px)" }}
         >
-          ⚡ Compounds every month
-        </SpikyChip>
-        <SpikyChip
+          Every month it compounds a little more.
+        </FloatChip>
+        <FloatChip
           color="var(--accent)"
           delay={200}
           style={{ top: "1rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s" }}
         >
-          No guesswork, just tracked results
-        </SpikyChip>
+          No guesswork. Every result gets tracked.
+        </FloatChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>
             The result
           </span>
-          <h2>SEO and social don't just build an audience. They build <em style={{ color: "var(--growth-soft)" }}>revenue</em>.</h2>
+          <h2>SEO and social media don't just build an audience. They build <em style={{ color: "var(--growth-soft)" }}>revenue</em>.</h2>
           <p>
             A beautiful site nobody finds is just expensive wallpaper. Pair
-            it with real SEO and a social presence that actually posts, and
+            it with real SEO and a social media presence that actually posts, and
             traffic, followers, and sales tend to start climbing at the same
-            time — here's what that curve usually looks like.
+            time. Here's what that curve usually looks like.
           </p>
         </Reveal>
 
@@ -530,7 +524,7 @@ export default function WebSkillet() {
                 />
               </svg>
               <div className="ws-chart-label-row" style={{ marginTop: "0.75rem" }}>
-                <span style={{ color: "var(--growth-soft)" }}>● Social & search traffic</span>
+                <span style={{ color: "var(--growth-soft)" }}>● Social media & search traffic</span>
                 <span style={{ color: "var(--accent)" }}>● Sales</span>
               </div>
             </div>
@@ -541,24 +535,24 @@ export default function WebSkillet() {
               <CountUp to={3.2} decimals={1} suffix="×" />
               <p>
                 <span className="ws-stat-title">Organic search traffic</span>
-                What search traffic looks like six months after we stop
-                guessing and start optimizing.
+                Organic search traffic grows 3.2 times over within six months
+                once we stop guessing and start optimizing.
               </p>
             </Reveal>
             <Reveal className="ws-stat" delay={100}>
               <CountUp to={2.6} decimals={1} suffix="×" />
               <p>
                 <span className="ws-stat-title">Social media traffic</span>
-                What happens when your Instagram bio link finally leads
-                somewhere worth clicking.
+                Social media traffic grows 2.6 times over once your bio link
+                finally leads somewhere worth clicking.
               </p>
             </Reveal>
             <Reveal className="ws-stat" delay={200}>
               <CountUp to={47} suffix="%" />
               <p>
                 <span className="ws-stat-title">Sales growth</span>
-                The number that actually matters, once that traffic lands
-                somewhere built to close the sale.
+                Sales grow 47% once that traffic lands somewhere actually
+                built to close the deal.
               </p>
             </Reveal>
           </div>
@@ -578,24 +572,24 @@ export default function WebSkillet() {
       <section id="local" className="ws-section ws-local">
         <div className="ws-glow-orb" style={{ top: "-3rem", left: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--neon-blue)" }} />
         <div className="ws-glow-orb" style={{ bottom: "2rem", right: "6%", width: "220px", height: "220px", animationDelay: "1.8s", ["--orb-color" as string]: "var(--accent-2)" }} />
-        <SpikyChip
+        <FloatChip
           color="var(--neon-blue)"
           style={{ top: "1.25rem", right: "calc(-50vw + 780px)" }}
         >
-          ● Found on Google Maps
-        </SpikyChip>
-        <SpikyChip
+          Show up right where locals are searching.
+        </FloatChip>
+        <FloatChip
           color="var(--accent-2)"
           delay={200}
           style={{ top: "5.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s" }}
         >
-          Open for business, 24/7 online
-        </SpikyChip>
+          Your site stays open for business, 24/7.
+        </FloatChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--neon-blue)" }}>For local businesses</span>
           <h2>Your storefront closes at 6pm. Your website <em style={{ color: "var(--neon-blue)" }}>shouldn&rsquo;t</em>.</h2>
           <p>
-            A great location still matters — but the search happens before
+            A great location still matters, but the search happens before
             the visit. Brick-and-mortar businesses with a real online
             presence get found, get chosen, and get paid, even when the
             doors are locked.
@@ -620,22 +614,22 @@ export default function WebSkillet() {
               <div className="ws-local-card-stat">
                 <strong>76%</strong>
                 <span>
-                  Of people who search for a local business on their phone
-                  visit it within a day.
+                  76% of people who search for a local business on their
+                  phone visit it within a day.
                 </span>
               </div>
               <div className="ws-local-card-stat">
                 <strong>3.7×</strong>
                 <span>
-                  More likely a customer trusts a business enough to buy once
-                  it has a real, working website.
+                  A customer is 3.7 times more likely to buy from a business
+                  with a real, working website than one without.
                 </span>
               </div>
               <div className="ws-local-card-stat">
                 <strong>28%</strong>
                 <span>
-                  Projected lift in foot traffic once a local site and search
-                  listing are actually optimized.
+                  Foot traffic rises by a projected 28% once a local site and
+                  search listing are actually optimized.
                 </span>
               </div>
             </div>
@@ -654,7 +648,7 @@ export default function WebSkillet() {
         </Reveal>
         <Reveal delay={160}>
           <p>
-            Tell us what you're working with — we'll reply with a plan, not a
+            Tell us what you're working with, and we'll reply with a plan, not a
             sales pitch.
           </p>
         </Reveal>
@@ -672,7 +666,7 @@ export default function WebSkillet() {
           </span>
           © {new Date().getFullYear()} Web Skillet
         </span>
-        <span>Web design · Social · Ads · SEO</span>
+        <span>Web design · Social Media · Ads · SEO</span>
       </footer>
     </div>
   );

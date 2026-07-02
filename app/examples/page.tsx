@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import Link from "next/link";
+import SiteNav from "../components/SiteNav";
 import "../globals.css";
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
@@ -79,13 +80,13 @@ const examples = [
   {
     title: "Restaurant & Café",
     color: "var(--accent)",
-    body: "Menu, hours, and online ordering front and center — most people decide where to eat about five minutes before they walk in.",
+    body: "Menu, hours, and online ordering front and center. Most people decide where to eat about five minutes before they walk in.",
     previewImage: "/assets/resturauntandcafemock.png",
   },
   {
     title: "Home & Trade Services",
     color: "var(--accent-2)",
-    body: "Reviews, service areas, and a booking form above the fold — built for people searching with a problem right now, not browsing.",
+    body: "Reviews, service areas, and a booking form above the fold, built for people searching with a problem right now, not browsing.",
     previewImage: "/assets/homeandtradeservices.png",
   },
   {
@@ -97,7 +98,7 @@ const examples = [
   {
     title: "Custom",
     color: "var(--neon-blue)",
-    body: "Doesn't fit a template? We scope it from scratch — whatever your business actually needs, credentials and case studies included where it matters.",
+    body: "Doesn't fit a template? We scope it from scratch: whatever your business actually needs, credentials and case studies included where it matters.",
     link: "/contact",
   },
 ];
@@ -107,20 +108,7 @@ export default function Examples() {
 
   return (
     <div className="ws-root">
-      <nav className="ws-nav">
-        <Link href="/" className="ws-logo">
-          <span className="ws-logo-crop">
-            <img src="/assets/webskilletlogo.png" alt="Web Skillet" className="ws-logo-full" />
-          </span>
-        </Link>
-        <ul className="ws-nav-links">
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/examples">Examples</Link></li>
-          <li><Link href="/about">About</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
-        </ul>
-        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
-      </nav>
+      <SiteNav />
 
       <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
         <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
@@ -165,7 +153,7 @@ export default function Examples() {
         </Reveal>
         <Reveal delay={160}>
           <p>
-            Tell us what you're working with — we'll reply with a plan, not a
+            Tell us what you're working with, and we'll reply with a plan, not a
             sales pitch.
           </p>
         </Reveal>
@@ -183,7 +171,7 @@ export default function Examples() {
           </span>
           © {new Date().getFullYear()} Web Skillet
         </span>
-        <span>Web design · Social · Ads · SEO</span>
+        <span>Web design · Social Media · Ads · SEO</span>
       </footer>
 
       {preview && (

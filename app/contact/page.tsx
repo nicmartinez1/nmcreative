@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
+import SiteNav from "../components/SiteNav";
 import "../globals.css";
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
@@ -71,27 +72,14 @@ export default function Contact() {
 
   return (
     <div className="ws-root">
-      <nav className="ws-nav">
-        <Link href="/" className="ws-logo">
-          <span className="ws-logo-crop">
-            <img src="/assets/webskilletlogo.png" alt="Web Skillet" className="ws-logo-full" />
-          </span>
-        </Link>
-        <ul className="ws-nav-links">
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/examples">Examples</Link></li>
-          <li><Link href="/about">About</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
-        </ul>
-        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
-      </nav>
+      <SiteNav />
 
       <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
         <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
           <span className="ws-eyebrow">Contact</span>
           <h2>Tell us about the business.</h2>
           <p>
-            A few details on what you run and what you need — we&rsquo;ll
+            A few details on what you run and what you need, and we&rsquo;ll
             reply with a plan and a rough price, not a sales pitch.
           </p>
         </Reveal>
@@ -102,7 +90,7 @@ export default function Contact() {
           {submitted ? (
             <div className="ws-form-success">
               <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>Got it</span>
-              <h3>Thanks — that&rsquo;s in.</h3>
+              <h3>Thanks, that&rsquo;s in.</h3>
               <p>
                 This form isn&rsquo;t wired up to a real inbox yet, so nothing
                 was actually sent. Once a contact address is set up, this same
@@ -132,7 +120,7 @@ export default function Contact() {
                   <input
                     type="text"
                     name="address"
-                    placeholder={isStartup ? "Not open yet — leave blank" : "123 Main St, Your City"}
+                    placeholder={isStartup ? "Not open yet, leave blank" : "123 Main St, Your City"}
                     disabled={isStartup}
                     required={!isStartup}
                   />
@@ -145,7 +133,7 @@ export default function Contact() {
                   checked={isStartup}
                   onChange={(e) => setIsStartup(e.target.checked)}
                 />
-                <span>This is a new / startup business — no storefront or address yet</span>
+                <span>This is a new / startup business, no storefront or address yet</span>
               </label>
 
               <div className="ws-form-field">
@@ -169,7 +157,7 @@ export default function Contact() {
                 <textarea
                   name="message"
                   rows={4}
-                  placeholder="Current site, rough budget, timeline — whatever's useful."
+                  placeholder="Current site, rough budget, timeline, whatever's useful."
                 />
               </label>
 
@@ -188,7 +176,7 @@ export default function Contact() {
           </span>
           © {new Date().getFullYear()} Web Skillet
         </span>
-        <span>Web design · Social · Ads · SEO</span>
+        <span>Web design · Social Media · Ads · SEO</span>
       </footer>
     </div>
   );

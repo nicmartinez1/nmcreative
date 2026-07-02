@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import Link from "next/link";
+import SiteNav from "../components/SiteNav";
 import "../globals.css";
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
@@ -57,7 +58,7 @@ const values = [
   {
     title: "One team, not four vendors",
     color: "var(--accent)",
-    body: "Your site, your social, and your search strategy get built together — so they pull in the same direction instead of fighting each other.",
+    body: "Your site, your social media, and your search strategy get built together, so they pull in the same direction instead of fighting each other.",
   },
   {
     title: "Built to convert, not just look nice",
@@ -67,7 +68,7 @@ const values = [
   {
     title: "Real reporting, no vanity metrics",
     color: "var(--growth-soft)",
-    body: "We report on traffic, leads, and sales — not just page views. If a number doesn't tie back to revenue, we don't lead with it.",
+    body: "We report on traffic, leads, and sales, not just page views. If a number doesn't tie back to revenue, we don't lead with it.",
   },
   {
     title: "Small enough to actually call",
@@ -79,20 +80,7 @@ const values = [
 export default function About() {
   return (
     <div className="ws-root">
-      <nav className="ws-nav">
-        <Link href="/" className="ws-logo">
-          <span className="ws-logo-crop">
-            <img src="/assets/webskilletlogo.png" alt="Web Skillet" className="ws-logo-full" />
-          </span>
-        </Link>
-        <ul className="ws-nav-links">
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/examples">Examples</Link></li>
-          <li><Link href="/about">About</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
-        </ul>
-        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
-      </nav>
+      <SiteNav />
 
       <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
         <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
@@ -100,7 +88,7 @@ export default function About() {
           <h2>We&rsquo;re a small studio. That&rsquo;s on purpose.</h2>
           <p>
             Most businesses end up with a web designer, a social media
-            person, an SEO consultant, and an ads agency — four different
+            person, an SEO consultant, and an ads agency: four different
             vendors with four different opinions, none of them talking to
             each other. Web Skillet is what happens when one team builds all
             of it together instead.
@@ -134,7 +122,7 @@ export default function About() {
         </Reveal>
         <Reveal delay={160}>
           <p>
-            Tell us what you're working with — we'll give you a straight
+            Tell us what you're working with, and we'll give you a straight
             answer, not a sales pitch.
           </p>
         </Reveal>
@@ -152,7 +140,7 @@ export default function About() {
           </span>
           © {new Date().getFullYear()} Web Skillet
         </span>
-        <span>Web design · Social · Ads · SEO</span>
+        <span>Web design · Social Media · Ads · SEO</span>
       </footer>
     </div>
   );
