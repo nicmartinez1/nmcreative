@@ -68,6 +68,44 @@ function Reveal({
 }
 
 /* ---------------------------------------------------------------------- */
+/* Spiky comic-book callout chip (SVG shape, true 3D offset copy behind)   */
+/* ---------------------------------------------------------------------- */
+
+const SPIKY_BODY_PATH =
+  "M 150,3 L 186.6,11.8 L 230,11.3 L 248.2,25.5 L 284.6,33.4 L 278.7,48.6 L 296.5,62.4 L 268.3,73.7 L 261.9,89.1 L 220.3,92.9 L 191.7,104.9 L 150,100 L 108.3,104.9 L 79.7,92.9 L 38.1,89.1 L 31.7,73.7 L 3.5,62.4 L 21.3,48.6 L 15.4,33.4 L 51.8,25.5 L 70,11.3 L 113.4,11.8 Z";
+const SPIKY_PATH = `${SPIKY_BODY_PATH} M 92,94 L 58,133 L 101,98 Z`;
+const SHADOW_PATH =
+  "M 150,5 L 220.5,22.6 L 288.9,39.5 L 264.1,67.4 L 235.8,95.5 L 150,95 L 64.2,95.5 L 35.9,67.4 L 11.1,39.5 L 79.5,22.6 Z";
+
+function SpikyChip({
+  color,
+  style,
+  delay,
+  children,
+}: {
+  color: string;
+  style?: CSSProperties;
+  delay?: number;
+  children: ReactNode;
+}) {
+  return (
+    <Reveal
+      className="ws-float-chip"
+      delay={delay}
+      style={{ ["--chip-color" as string]: color, ...style }}
+    >
+      <svg className="ws-float-chip-shadow" viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d={SHADOW_PATH} />
+      </svg>
+      <svg className="ws-float-chip-body" viewBox="0 0 300 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d={SPIKY_PATH} />
+      </svg>
+      <span className="ws-float-chip-text">{children}</span>
+    </Reveal>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
 /* Count-up number for the results section                                 */
 /* ---------------------------------------------------------------------- */
 
@@ -403,19 +441,19 @@ export default function WebSkillet() {
       <section id="services" className="ws-section ws-services">
         <div className="ws-glow-orb" style={{ top: "-4rem", left: "8%", width: "260px", height: "260px", ["--orb-color" as string]: "var(--accent-2)" }} />
         <div className="ws-glow-orb" style={{ bottom: "-6rem", right: "6%", width: "220px", height: "220px", animationDelay: "2s", ["--orb-color" as string]: "var(--accent)" }} />
-        <Reveal
-          className="ws-float-chip"
-          style={{ top: "1rem", right: "calc(-50vw + 736px)", ["--chip-color" as string]: "var(--accent-2)" }}
+        <SpikyChip
+          color="var(--accent-2)"
+          style={{ top: "1rem", right: "calc(-50vw + 736px)" }}
         >
           ↑ 2.6× social traffic
-        </Reveal>
-        <Reveal
-          className="ws-float-chip"
+        </SpikyChip>
+        <SpikyChip
+          color="var(--accent)"
           delay={200}
-          style={{ top: "5.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s", ["--chip-color" as string]: "var(--accent)" }}
+          style={{ top: "5.5rem", left: "calc(-50vw + 780px)", animationDelay: "1.2s" }}
         >
           → Live in 2 weeks
-        </Reveal>
+        </SpikyChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--accent-2)" }}>The stack</span>
           <h2>Designed to convert. Built to <em style={{ color: "var(--accent-2)" }}>rank</em>.</h2>
@@ -446,19 +484,19 @@ export default function WebSkillet() {
       <section id="results" className="ws-section ws-results">
         <div className="ws-glow-orb" style={{ top: "-3rem", right: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--growth-soft)" }} />
         <div className="ws-glow-orb" style={{ bottom: "4rem", left: "4%", width: "200px", height: "200px", animationDelay: "1.5s", ["--orb-color" as string]: "var(--accent)" }} />
-        <Reveal
-          className="ws-float-chip"
-          style={{ top: "2.5rem", left: "calc(-50vw + 736px)", ["--chip-color" as string]: "var(--growth-soft)" }}
+        <SpikyChip
+          color="var(--growth-soft)"
+          style={{ top: "2.5rem", left: "calc(-50vw + 736px)" }}
         >
           ⚡ Compounds every month
-        </Reveal>
-        <Reveal
-          className="ws-float-chip"
+        </SpikyChip>
+        <SpikyChip
+          color="var(--accent)"
           delay={200}
-          style={{ top: "5.5rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s", ["--chip-color" as string]: "var(--accent)" }}
+          style={{ top: "5.5rem", right: "calc(-50vw + 780px)", animationDelay: "0.8s" }}
         >
           No guesswork, just tracked results
-        </Reveal>
+        </SpikyChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>
             The result
@@ -543,19 +581,19 @@ export default function WebSkillet() {
       <section id="local" className="ws-section ws-local">
         <div className="ws-glow-orb" style={{ top: "-3rem", left: "10%", width: "240px", height: "240px", ["--orb-color" as string]: "var(--neon-blue)" }} />
         <div className="ws-glow-orb" style={{ bottom: "2rem", right: "6%", width: "220px", height: "220px", animationDelay: "1.8s", ["--orb-color" as string]: "var(--accent-2)" }} />
-        <Reveal
-          className="ws-float-chip"
-          style={{ top: "1.25rem", right: "calc(-50vw + 780px)", ["--chip-color" as string]: "var(--neon-blue)" }}
+        <SpikyChip
+          color="var(--neon-blue)"
+          style={{ top: "1.25rem", right: "calc(-50vw + 780px)" }}
         >
           ● Found on Google Maps
-        </Reveal>
-        <Reveal
-          className="ws-float-chip"
+        </SpikyChip>
+        <SpikyChip
+          color="var(--accent-2)"
           delay={200}
-          style={{ top: "5.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s", ["--chip-color" as string]: "var(--accent-2)" }}
+          style={{ top: "5.5rem", left: "calc(-50vw + 736px)", animationDelay: "1.6s" }}
         >
           Open for business, 24/7 online
-        </Reveal>
+        </SpikyChip>
         <Reveal className="ws-section-head">
           <span className="ws-eyebrow" style={{ color: "var(--neon-blue)" }}>For local businesses</span>
           <h2>Your storefront closes at 6pm. Your website <em style={{ color: "var(--neon-blue)" }}>shouldn&rsquo;t</em>.</h2>
