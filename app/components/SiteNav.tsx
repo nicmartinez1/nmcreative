@@ -21,7 +21,7 @@ export default function SiteNav({ logoHref = "/" }: { logoHref?: string }) {
           <li><Link href="/about">About</Link></li>
           <li><Link href="/contact">Contact</Link></li>
         </ul>
-        <Link href="/contact" className="ws-nav-cta">Start a project</Link>
+        <Link href="/contact" className="ws-nav-cta">Let&rsquo;s cook 🔥</Link>
         <button
           type="button"
           className={`ws-nav-burger ${open ? "is-open" : ""}`}
@@ -40,7 +40,7 @@ export default function SiteNav({ logoHref = "/" }: { logoHref?: string }) {
         <Link href="/about" onClick={close}>About</Link>
         <Link href="/contact" onClick={close}>Contact</Link>
         <Link href="/contact" className="ws-btn-primary" onClick={close}>
-          Start a project
+          Let&rsquo;s cook 🔥
         </Link>
       </div>
     </>
