@@ -388,11 +388,14 @@ export default function WebSkillet() {
 
       <header id="top" className="ws-hero">
         <div className="ws-hero-bg" aria-hidden="true">
-          <img
-            className="ws-hero-bg-img"
-            src="/assets/hero-final.png"
-            alt=""
-          />
+          <picture>
+            <source media="(max-width: 720px)" srcSet="/assets/hero-mobile.png" />
+            <img
+              className="ws-hero-bg-img"
+              src="/assets/hero-final.png"
+              alt=""
+            />
+          </picture>
           <div className="ws-hero-bg-scrim" />
           <div className="ws-hero-shine" aria-hidden="true" />
           <div className="ws-hero-glow-pulse" aria-hidden="true" />
