@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
+import React, { useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
-import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import "../globals.css";
 
 function Reveal({
@@ -80,62 +79,17 @@ const plans = [
 
 export default function ClientAccess() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setLoggedIn(!!data.session);
-      setCheckingSession(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedIn(!!session);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-
-    if (!isSupabaseConfigured) {
-      setError("Login isn't connected yet — use the dev bypass below to preview the portal.");
-      return;
-    }
-
-    setSubmitting(true);
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
-
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
     setLoggedIn(true);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     setLoggedIn(false);
   };
-
-  const handleDevBypass = () => {
-    setError("");
-    setLoggedIn(true);
-  };
-
-  if (checkingSession) {
-    return (
-      <div className="ws-root">
-        <SiteNav />
-      </div>
-    );
-  }
 
   return (
     <div className="ws-root">
@@ -177,9 +131,8 @@ export default function ClientAccess() {
                     required
                   />
                 </label>
-                {error && <p className="ws-portal-error">{error}</p>}
-                <button type="submit" className="ws-btn-primary" disabled={submitting}>
-                  {submitting ? "Logging in…" : "Log in"}
+                <button type="submit" className="ws-btn-primary">
+                  Log in
                 </button>
               </form>
               <p className="ws-portal-signup-note">
@@ -189,15 +142,6 @@ export default function ClientAccess() {
                 </Link>{" "}
                 to get set up.
               </p>
-              {process.env.NODE_ENV === "development" && (
-                <button
-                  type="button"
-                  className="ws-btn-ghost ws-portal-dev-bypass"
-                  onClick={handleDevBypass}
-                >
-                  Skip login (dev only) →
-                </button>
-              )}
             </div>
           </section>
         </>

@@ -1814,18 +1814,6 @@ body {
   color: rgba(21, 14, 40, 0.65);
 }
 
-.ws-portal-error {
-  font-size: 0.85rem;
-  color: var(--growth-soft);
-  margin: -0.5rem 0 0;
-}
-
-.ws-portal-dev-bypass {
-  display: block;
-  margin: 1rem auto 0;
-  text-align: center;
-}
-
 .ws-portal-card {
   background: #fff;
   border: 1px solid rgba(21, 14, 40, 0.1);
