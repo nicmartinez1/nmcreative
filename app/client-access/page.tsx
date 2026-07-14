@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
+import React, { useEffect, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
 import "../globals.css";
@@ -74,12 +74,20 @@ export default function ClientAccess() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    if (localStorage.getItem("ws-client-logged-in") === "true") {
+      setLoggedIn(true);
+    }
+  }, []);
+
   const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    localStorage.setItem("ws-client-logged-in", "true");
     setLoggedIn(true);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("ws-client-logged-in");
     setLoggedIn(false);
   };
 
