@@ -29,14 +29,6 @@ function Reveal({
   );
 }
 
-const progressSteps = [
-  { label: "Discovery", status: "done" },
-  { label: "Design", status: "done" },
-  { label: "Build", status: "active" },
-  { label: "Review", status: "upcoming" },
-  { label: "Launch", status: "upcoming" },
-];
-
 const plans = [
   {
     name: "Website Care",
@@ -161,22 +153,6 @@ export default function ClientAccess() {
           </header>
 
           <section className="ws-section" style={{ paddingTop: 0 }}>
-            <Reveal className="ws-portal-card">
-              <h3>Project progress</h3>
-              <div className="ws-portal-steps">
-                {progressSteps.map((step, i) => (
-                  <div className={`ws-portal-step is-${step.status}`} key={step.label}>
-                    <span className="ws-portal-step-dot">{step.status === "done" ? "✓" : i + 1}</span>
-                    <span className="ws-portal-step-label">{step.label}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="ws-portal-note">
-                Example timeline shown here — once your build starts, this
-                reflects real progress from your project team.
-              </p>
-            </Reveal>
-
             <div className="ws-portal-grid">
               <Reveal delay={80} className="ws-portal-card">
                 <h3>Need support?</h3>
