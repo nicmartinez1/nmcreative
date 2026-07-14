@@ -347,6 +347,46 @@ const services = [
   },
 ];
 
+const plans = [
+  {
+    name: "Website Care",
+    price: "$99–149/month",
+    tagline: "Keep things running",
+    color: "var(--neon-blue)",
+    features: [
+      "Uptime & security monitoring",
+      "Software and plugin updates",
+      "Monthly backups",
+      "Minor content edits",
+    ],
+  },
+  {
+    name: "Growth SEO",
+    price: "$299–499/month",
+    tagline: "Grow your visibility",
+    color: "var(--accent-2)",
+    features: [
+      "Everything in Website Care",
+      "Ongoing on-page SEO",
+      "Keyword & ranking tracking",
+      "Monthly performance report",
+    ],
+  },
+  {
+    name: "Growth+",
+    price: "Starting at $999/month",
+    tagline: "Full growth package",
+    color: "var(--accent)",
+    featured: true,
+    features: [
+      "Everything in Growth SEO",
+      "Social media management",
+      "Ad campaign management",
+      "Projected additional followers and up to 3x more customers",
+    ],
+  },
+];
+
 const localBenefits = [
   {
     title: "Show up before they walk in",
@@ -471,6 +511,41 @@ export default function WebSkillet() {
               points={s.points}
               delay={i * 90}
             />
+          ))}
+        </div>
+      </section>
+
+      <section id="plans" className="ws-section" style={{ paddingTop: 0 }}>
+        <Reveal className="ws-section-head">
+          <span className="ws-eyebrow" style={{ color: "var(--accent-2)" }}>Ongoing plans</span>
+          <h2>Once it&rsquo;s built, keep it <em style={{ color: "var(--accent-2)" }}>growing</em>.</h2>
+          <p>
+            Every site launches with a plan already in place to keep it
+            secure, fast, and found, upgrade whenever you&rsquo;re ready for more.
+          </p>
+        </Reveal>
+        <div className="ws-plan-grid">
+          {plans.map((plan, i) => (
+            <Reveal
+              as="article"
+              key={plan.name}
+              className={`ws-plan-card ${plan.featured ? "is-featured" : ""}`}
+              delay={i * 90}
+              style={{ ["--plan-color" as string]: plan.color }}
+            >
+              {plan.featured && <span className="ws-plan-badge">Most popular</span>}
+              <h3>{plan.name}</h3>
+              <p className="ws-plan-price">{plan.price}</p>
+              <p className="ws-plan-tagline">{plan.tagline}</p>
+              <ul className="ws-plan-features">
+                {plan.features.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+              <Link href="/contact" className="ws-btn-primary">
+                Get started
+              </Link>
+            </Reveal>
           ))}
         </div>
       </section>

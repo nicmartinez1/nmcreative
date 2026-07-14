@@ -274,9 +274,9 @@ body {
 
 .ws-nav-cta {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   letter-spacing: 0.02em;
-  padding: 0.6rem 1.1rem;
+  padding: 0.75rem 1.6rem;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--growth), var(--accent) 45%, var(--accent-2) 75%, var(--neon-blue));
   background-size: 260% 100%;
@@ -365,7 +365,7 @@ body {
   justify-content: center;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1080px) {
   .ws-nav-links,
   .ws-nav-cta {
     display: none;
@@ -984,6 +984,29 @@ body {
 @media (max-width: 560px) {
   .ws-services-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ws-card {
+    min-height: 0;
+    padding: 1.5rem 1.5rem 1.4rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ws-card-bullets {
+    justify-items: center;
+  }
+
+  .ws-card-bullets li {
+    padding-left: 0;
+  }
+
+  .ws-card-bullets li::before {
+    display: none;
+  }
+
+  .ws-card-detail p {
+    text-align: center;
   }
 }
 
@@ -1781,6 +1804,240 @@ body {
   max-width: 32rem;
   color: rgba(21, 14, 40, 0.68);
   line-height: 1.6;
+}
+
+/* ---------- client portal ---------- */
+.ws-portal-signup-note {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgba(21, 14, 40, 0.65);
+}
+
+.ws-portal-error {
+  font-size: 0.85rem;
+  color: var(--growth-soft);
+  margin: -0.5rem 0 0;
+}
+
+.ws-portal-dev-bypass {
+  display: block;
+  margin: 1rem auto 0;
+  text-align: center;
+}
+
+.ws-portal-card {
+  background: #fff;
+  border: 1px solid rgba(21, 14, 40, 0.1);
+  border-radius: 22px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 24px 60px -40px rgba(21, 14, 40, 0.3);
+  margin-bottom: 1.5rem;
+}
+
+.ws-portal-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+
+.ws-portal-card p {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(21, 14, 40, 0.68);
+  margin-bottom: 1.1rem;
+}
+
+.ws-portal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .ws-portal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ws-portal-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1.25rem 0 1rem;
+}
+
+.ws-portal-step {
+  position: relative;
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.ws-portal-step::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.ws-portal-step:first-child::before {
+  display: none;
+}
+
+.ws-portal-step.is-done::before {
+  background: var(--growth-soft);
+}
+
+.ws-portal-step-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--bg);
+  border: 2px solid var(--line);
+  color: rgba(21, 14, 40, 0.5);
+}
+
+.ws-portal-step.is-done .ws-portal-step-dot {
+  background: var(--growth-soft);
+  border-color: var(--growth-soft);
+  color: #fff;
+}
+
+.ws-portal-step.is-active .ws-portal-step-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.ws-portal-step-label {
+  font-size: 0.82rem;
+  color: rgba(21, 14, 40, 0.65);
+}
+
+.ws-portal-step.is-active .ws-portal-step-label {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.ws-portal-note {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: rgba(21, 14, 40, 0.5);
+}
+
+.ws-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .ws-plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ws-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--plan-color, var(--accent)) 25%, transparent);
+  border-top-width: 3px;
+  border-radius: 22px;
+  padding: 2rem 1.75rem;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s ease;
+}
+
+.ws-plan-card.ws-in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ws-plan-card.is-featured {
+  box-shadow: 0 30px 70px -35px color-mix(in srgb, var(--plan-color, var(--accent)) 55%, transparent);
+}
+
+.ws-plan-badge {
+  position: absolute;
+  top: -0.75rem;
+  left: 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--plan-color, var(--accent));
+  color: #fff;
+}
+
+.ws-plan-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.ws-plan-price {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.ws-plan-tagline {
+  font-size: 0.88rem;
+  color: var(--plan-color, var(--accent));
+  margin-bottom: 1.25rem;
+}
+
+.ws-plan-features {
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  flex: 1;
+}
+
+.ws-plan-features li {
+  position: relative;
+  padding-left: 1.2rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(21, 14, 40, 0.72);
+}
+
+.ws-plan-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--plan-color, var(--accent));
+  font-weight: 700;
+}
+
+.ws-plan-card .ws-btn-primary {
+  justify-content: center;
+  width: 100%;
 }
 
 /* ---------- focus states ---------- */
