@@ -80,6 +80,14 @@ export default function ClientAccess() {
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
   const [switchingPlan, setSwitchingPlan] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [signupSent, setSignupSent] = useState(false);
+  const [authHash] = useState(() => (typeof window !== "undefined" ? window.location.hash : ""));
+  const [passwordSet, setPasswordSet] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+  const needsPasswordSetup =
+    (authHash.includes("type=invite") || authHash.includes("type=recovery")) && !passwordSet;
 
   const loadPlan = async (uid: string) => {
     const { data } = await supabase
@@ -145,6 +153,35 @@ export default function ClientAccess() {
     }
   };
 
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+
+    if (!isSupabaseConfigured) {
+      setError("Login isn't connected yet — add your Supabase credentials to .env.local.");
+      return;
+    }
+
+    setSubmitting(true);
+    const { data, error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/client-access` },
+    });
+    setSubmitting(false);
+
+    if (signupError) {
+      setError(signupError.message);
+      return;
+    }
+
+    // If email confirmation is off, Supabase returns a session immediately
+    // and onAuthStateChange picks it up; otherwise, prompt to check inbox.
+    if (!data.session) {
+      setSignupSent(true);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setLoggedIn(false);
@@ -163,6 +200,58 @@ export default function ClientAccess() {
     }
   };
 
+  const handleSetPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setSettingPassword(true);
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    setSettingPassword(false);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    window.history.replaceState(null, "", window.location.pathname);
+    setPasswordSet(true);
+  };
+
+  if (needsPasswordSetup) {
+    return (
+      <div className="ws-root">
+        <SiteNav />
+        <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
+          <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
+            <span className="ws-eyebrow">Client access</span>
+            <h2>Set your password.</h2>
+            <p>You&rsquo;ve been invited to Web Skillet — choose a password to finish setting up your account.</p>
+          </Reveal>
+        </header>
+        <section className="ws-section" style={{ paddingTop: 0, paddingBottom: "clamp(5rem, 10vw, 8rem)" }}>
+          <div className="ws-form-card ws-form-card-static">
+            <form className="ws-form" onSubmit={handleSetPassword}>
+              <label className="ws-form-field">
+                <span>New password</span>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={6}
+                  required
+                />
+              </label>
+              {error && <p className="ws-portal-error">{error}</p>}
+              <button type="submit" className="ws-btn-primary" disabled={settingPassword}>
+                {settingPassword ? "Saving…" : "Set password & continue"}
+              </button>
+            </form>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (checkingSession) {
     return (
       <div className="ws-root">
@@ -180,49 +269,94 @@ export default function ClientAccess() {
           <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
             <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
               <span className="ws-eyebrow">Client access</span>
-              <h2>Welcome back.</h2>
+              <h2>{mode === "login" ? "Welcome back." : "Create your account."}</h2>
               <p>
-                Log in to check your project status, reach your support
-                team, or upgrade your plan.
+                {mode === "login"
+                  ? "Log in to check your project status, reach your support team, or upgrade your plan."
+                  : "Set up your own login in seconds — no need to wait on an invite."}
               </p>
             </Reveal>
           </header>
 
           <section className="ws-section" style={{ paddingTop: 0, paddingBottom: "clamp(5rem, 10vw, 8rem)" }}>
             <div className="ws-form-card ws-form-card-static">
-              <form className="ws-form" onSubmit={handleLogin}>
-                <label className="ws-form-field">
-                  <span>Business email</span>
-                  <input
-                    type="email"
-                    placeholder="you@business.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </label>
-                <label className="ws-form-field">
-                  <span>Password</span>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </label>
-                {error && <p className="ws-portal-error">{error}</p>}
-                <button type="submit" className="ws-btn-primary" disabled={submitting}>
-                  {submitting ? "Logging in…" : "Log in"}
-                </button>
-              </form>
-              <p className="ws-portal-signup-note">
-                Not a client yet?{" "}
-                <Link href="/contact" className="ws-btn-ghost">
-                  Get in touch
-                </Link>{" "}
-                to get set up.
-              </p>
+              {signupSent ? (
+                <div className="ws-form-success">
+                  <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>Almost there</span>
+                  <h3>Check your email.</h3>
+                  <p>
+                    We sent a confirmation link to <strong>{email}</strong>. Click
+                    it to verify your account, then come back and log in.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <form className="ws-form" onSubmit={mode === "login" ? handleLogin : handleSignup}>
+                    <label className="ws-form-field">
+                      <span>Business email</span>
+                      <input
+                        type="email"
+                        placeholder="you@business.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </label>
+                    <label className="ws-form-field">
+                      <span>Password</span>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        minLength={mode === "signup" ? 6 : undefined}
+                        required
+                      />
+                    </label>
+                    {error && <p className="ws-portal-error">{error}</p>}
+                    <button type="submit" className="ws-btn-primary" disabled={submitting}>
+                      {submitting
+                        ? mode === "login"
+                          ? "Logging in…"
+                          : "Creating account…"
+                        : mode === "login"
+                          ? "Log in"
+                          : "Create account"}
+                    </button>
+                  </form>
+                  <p className="ws-portal-signup-note">
+                    {mode === "login" ? (
+                      <>
+                        New client?{" "}
+                        <button
+                          type="button"
+                          className="ws-btn-ghost"
+                          onClick={() => {
+                            setMode("signup");
+                            setError("");
+                          }}
+                        >
+                          Create an account
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Already have an account?{" "}
+                        <button
+                          type="button"
+                          className="ws-btn-ghost"
+                          onClick={() => {
+                            setMode("login");
+                            setError("");
+                          }}
+                        >
+                          Log in
+                        </button>
+                      </>
+                    )}
+                  </p>
+                </>
+              )}
             </div>
           </section>
         </>

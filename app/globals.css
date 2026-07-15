@@ -713,6 +713,20 @@ body {
   transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease, text-shadow 0.2s ease;
 }
 
+button.ws-btn-ghost {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 0 2px;
+  cursor: pointer;
+}
+
+button.ws-btn-ghost:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .ws-btn-ghost:hover,
 .ws-btn-ghost:focus-visible {
   opacity: 1;
