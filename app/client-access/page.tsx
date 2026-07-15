@@ -286,14 +286,25 @@ export default function ClientAccess() {
                   <h3>Check your email.</h3>
                   <p>
                     We sent a confirmation link to <strong>{email}</strong>. Click
-                    it to verify your account, then come back and log in.
+                    it to verify your account, then come back and{" "}
+                    <button
+                      type="button"
+                      className="ws-btn-ghost"
+                      onClick={() => {
+                        setSignupSent(false);
+                        setMode("login");
+                      }}
+                    >
+                      log in
+                    </button>
+                    .
                   </p>
                 </div>
               ) : (
                 <>
                   <form className="ws-form" onSubmit={mode === "login" ? handleLogin : handleSignup}>
                     <label className="ws-form-field">
-                      <span>Business email</span>
+                      <span>Email</span>
                       <input
                         type="email"
                         placeholder="you@business.com"
