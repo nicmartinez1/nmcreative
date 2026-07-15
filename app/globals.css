@@ -1814,6 +1814,12 @@ body {
   color: rgba(21, 14, 40, 0.65);
 }
 
+.ws-portal-error {
+  font-size: 0.85rem;
+  color: var(--growth-soft);
+  margin: -0.5rem 0 0;
+}
+
 .ws-portal-card {
   background: #fff;
   border: 1px solid rgba(21, 14, 40, 0.1);
@@ -1835,6 +1841,69 @@ body {
   line-height: 1.55;
   color: rgba(21, 14, 40, 0.68);
   margin-bottom: 1.1rem;
+}
+
+.ws-portal-support-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: color-mix(in srgb, var(--neon-blue) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--neon-blue) 35%, transparent);
+  border-radius: 22px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.ws-portal-support-banner h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.ws-portal-support-banner p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(21, 14, 40, 0.68);
+  max-width: 28rem;
+}
+
+.ws-portal-support-banner .ws-portal-placeholder-note {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 2rem;
+}
+
+.ws-portal-contact {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ws-portal-contact .ws-btn-ghost {
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  .ws-portal-support-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ws-portal-support-banner .ws-portal-placeholder-note {
+    position: static;
+    display: block;
+    margin-top: 0.5rem;
+  }
+}
+
+.ws-portal-placeholder-note {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--growth-soft);
 }
 
 .ws-portal-grid {
@@ -1884,6 +1953,12 @@ body {
   box-shadow: 0 30px 70px -35px color-mix(in srgb, var(--plan-color, var(--accent)) 55%, transparent);
 }
 
+.ws-plan-card.is-current {
+  border-color: var(--plan-color, var(--accent));
+  border-width: 2px;
+  background: color-mix(in srgb, var(--plan-color, var(--accent)) 5%, #fff);
+}
+
 .ws-plan-badge {
   position: absolute;
   top: -0.75rem;
@@ -1896,6 +1971,10 @@ body {
   border-radius: 999px;
   background: var(--plan-color, var(--accent));
   color: #fff;
+}
+
+.ws-plan-badge-current {
+  background: var(--paper);
 }
 
 .ws-plan-card h3 {
@@ -1943,9 +2022,23 @@ body {
   font-weight: 700;
 }
 
-.ws-plan-card .ws-btn-primary {
+.ws-plan-card .ws-btn-primary,
+.ws-plan-card .ws-btn-ghost {
   justify-content: center;
   width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.85rem 1.5rem;
+}
+
+.ws-plan-card button.ws-btn-primary {
+  border: none;
+  cursor: pointer;
+}
+
+.ws-plan-card .ws-btn-ghost:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* ---------- focus states ---------- */

@@ -10,6 +10,7 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@supabase/supabase-js": "^2.110.6",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

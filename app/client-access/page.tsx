@@ -3,6 +3,7 @@
 import React, { useEffect, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import "../globals.css";
 
 function Reveal({
@@ -71,25 +72,104 @@ const plans = [
 
 export default function ClientAccess() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState(plans[0].name);
+  const [switchingPlan, setSwitchingPlan] = useState(false);
+
+  const loadPlan = async (uid: string) => {
+    const { data } = await supabase
+      .from("plan_changes")
+      .select("plan_name")
+      .eq("user_id", uid)
+      .order("changed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) setCurrentPlan(data.plan_name);
+  };
 
   useEffect(() => {
-    if (localStorage.getItem("ws-client-logged-in") === "true") {
-      setLoggedIn(true);
+    if (!isSupabaseConfigured) {
+      setCheckingSession(false);
+      return;
     }
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) {
+          setLoggedIn(true);
+          setUserId(data.session.user.id);
+          setEmail(data.session.user.email ?? "");
+          loadPlan(data.session.user.id);
+        }
+      })
+      .catch(() => {
+        // Supabase unreachable — fall through to the login form.
+      })
+      .finally(() => setCheckingSession(false));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(!!session);
+      if (session) {
+        setUserId(session.user.id);
+        setEmail(session.user.email ?? "");
+        loadPlan(session.user.id);
+      } else {
+        setUserId(null);
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    localStorage.setItem("ws-client-logged-in", "true");
-    setLoggedIn(true);
+    setError("");
+
+    if (!isSupabaseConfigured) {
+      setError("Login isn't connected yet — add your Supabase credentials to .env.local.");
+      return;
+    }
+
+    setSubmitting(true);
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    setSubmitting(false);
+
+    if (authError) {
+      setError(authError.message);
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("ws-client-logged-in");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setLoggedIn(false);
+    setUserId(null);
   };
+
+  const handleSwitchPlan = async (planName: string) => {
+    if (!userId) return;
+    setSwitchingPlan(true);
+    const { error: insertError } = await supabase
+      .from("plan_changes")
+      .insert({ user_id: userId, plan_name: planName });
+    setSwitchingPlan(false);
+    if (!insertError) {
+      setCurrentPlan(planName);
+    }
+  };
+
+  if (checkingSession) {
+    return (
+      <div className="ws-root">
+        <SiteNav />
+      </div>
+    );
+  }
 
   return (
     <div className="ws-root">
@@ -131,8 +211,9 @@ export default function ClientAccess() {
                     required
                   />
                 </label>
-                <button type="submit" className="ws-btn-primary">
-                  Log in
+                {error && <p className="ws-portal-error">{error}</p>}
+                <button type="submit" className="ws-btn-primary" disabled={submitting}>
+                  {submitting ? "Logging in…" : "Log in"}
                 </button>
               </form>
               <p className="ws-portal-signup-note">
@@ -161,65 +242,97 @@ export default function ClientAccess() {
           </header>
 
           <section className="ws-section" style={{ paddingTop: 0 }}>
-            <div className="ws-portal-grid">
-              <Reveal delay={80} className="ws-portal-card">
-                <h3>Need support?</h3>
-                <p>
-                  Bug, question, or a small change you need made — send it
-                  over and your team will get back to you.
-                </p>
-                <Link href="/contact" className="ws-btn-primary">
-                  Message support
-                </Link>
-              </Reveal>
-
-              <Reveal delay={160} className="ws-portal-card">
+            <Reveal className="ws-portal-support-banner">
+              <div>
                 <h3>Get IT help</h3>
                 <p>
-                  Hosting, security, or anything technical — chat with our
-                  IT team live, or send a message and we&rsquo;ll get it
-                  sorted.
+                  Hosting, security, or anything technical is handled by our
+                  IT partner directly — reach them any time.
                 </p>
-                <Link href="/contact" className="ws-btn-ghost">
-                  Chat with IT support →
-                </Link>
-              </Reveal>
-            </div>
+              </div>
+              <div className="ws-portal-contact">
+                <a href="mailto:support@[itpartner].com" className="ws-btn-primary">
+                  support@[itpartner].com
+                </a>
+                <a href="tel:+10000000000" className="ws-btn-ghost">
+                  (000) 000-0000
+                </a>
+              </div>
+              <span className="ws-portal-placeholder-note">
+                Placeholder contact — swap in once the partnership is finalized.
+              </span>
+            </Reveal>
+
+            <Reveal delay={80} className="ws-portal-card">
+              <h3>Need support?</h3>
+              <p>
+                Bug, question, or a small change you need made — send it
+                over and your team will get back to you.
+              </p>
+              <Link href="/contact" className="ws-btn-ghost">
+                Message support →
+              </Link>
+            </Reveal>
           </section>
 
           <section className="ws-section" style={{ paddingTop: 0 }}>
             <Reveal className="ws-section-head">
-              <span className="ws-eyebrow">Upgrade</span>
-              <h2>Ready to grow further?</h2>
+              <span className="ws-eyebrow">Subscription</span>
+              <h2>Manage your plan.</h2>
               <p>
-                Add ongoing SEO or a full marketing push whenever you&rsquo;re
-                ready — no need to start over with a new team.
+                You&rsquo;re currently on <strong>{currentPlan}</strong>. Switch
+                any time — changes take effect on your next billing cycle.
               </p>
             </Reveal>
             <div className="ws-plan-grid">
-              {plans.map((plan, i) => (
-                <Reveal
-                  as="article"
-                  key={plan.name}
-                  className={`ws-plan-card ${plan.featured ? "is-featured" : ""}`}
-                  delay={i * 90}
-                  style={{ ["--plan-color" as string]: plan.color }}
-                >
-                  {plan.featured && <span className="ws-plan-badge">Most popular</span>}
-                  <h3>{plan.name}</h3>
-                  <p className="ws-plan-price">{plan.price}</p>
-                  <p className="ws-plan-tagline">{plan.tagline}</p>
-                  <ul className="ws-plan-features">
-                    {plan.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                  <Link href="/contact" className="ws-btn-primary">
-                    Request this plan
-                  </Link>
-                </Reveal>
-              ))}
+              {plans.map((plan, i) => {
+                const isCurrent = plan.name === currentPlan;
+                return (
+                  <Reveal
+                    as="article"
+                    key={plan.name}
+                    className={`ws-plan-card ${plan.featured ? "is-featured" : ""} ${isCurrent ? "is-current" : ""}`}
+                    delay={i * 90}
+                    style={{ ["--plan-color" as string]: plan.color }}
+                  >
+                    {isCurrent ? (
+                      <span className="ws-plan-badge ws-plan-badge-current">Current plan</span>
+                    ) : (
+                      plan.featured && <span className="ws-plan-badge">Most popular</span>
+                    )}
+                    <h3>{plan.name}</h3>
+                    <p className="ws-plan-price">{plan.price}</p>
+                    <p className="ws-plan-tagline">{plan.tagline}</p>
+                    <ul className="ws-plan-features">
+                      {plan.features.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
+                    {isCurrent ? (
+                      <button type="button" className="ws-btn-ghost" disabled>
+                        Your current plan
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="ws-btn-primary"
+                        disabled={switchingPlan}
+                        onClick={() => handleSwitchPlan(plan.name)}
+                      >
+                        {switchingPlan ? "Switching…" : "Switch to this plan"}
+                      </button>
+                    )}
+                  </Reveal>
+                );
+              })}
             </div>
+            <p className="ws-portal-signup-note">
+              Need to cancel instead?{" "}
+              <Link href="/contact" className="ws-btn-ghost">
+                Contact your account manager
+              </Link>
+              .
+            </p>
           </section>
         </>
       )}
