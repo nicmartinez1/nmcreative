@@ -311,6 +311,14 @@ export default function Admin() {
 
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">
+                    <colgroup>
+                      <col style={{ width: "30%" }} />
+                      <col style={{ width: "16%" }} />
+                      <col style={{ width: "12%" }} />
+                      <col style={{ width: "10%" }} />
+                      <col style={{ width: "18%" }} />
+                      <col style={{ width: "14%" }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>Email</th>
