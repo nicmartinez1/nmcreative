@@ -22,6 +22,7 @@ type Client = {
   plan_since: string;
   business_name: string | null;
   has_website: boolean;
+  has_subscription: boolean;
   monthly_amount: number | null;
 };
 
@@ -31,7 +32,7 @@ type LastAction =
       kind: "billing";
       label: string;
       email: string;
-      previousBilling: { has_website: boolean; monthly_amount: number | null };
+      previousBilling: { has_website: boolean; has_subscription: boolean; monthly_amount: number | null };
     };
 
 export default function Admin() {
@@ -53,6 +54,7 @@ export default function Admin() {
   const [pendingBilling, setPendingBilling] = useState<{
     email: string;
     hasWebsite: boolean;
+    hasSubscription: boolean;
     monthlyAmount: number | null;
   } | null>(null);
   const [billingSubmitting, setBillingSubmitting] = useState(false);
@@ -203,13 +205,19 @@ export default function Admin() {
   };
 
   const commitMonthlyAmount = (c: Client) => {
+    if (!c.has_subscription) return;
     const raw = billingDrafts[c.email];
     if (raw === undefined) return;
     const trimmed = raw.trim();
     const parsed = trimmed === "" ? null : Number(trimmed);
     if (trimmed !== "" && Number.isNaN(parsed)) return;
     if (parsed === c.monthly_amount) return;
-    setPendingBilling({ email: c.email, hasWebsite: c.has_website, monthlyAmount: parsed });
+    setPendingBilling({
+      email: c.email,
+      hasWebsite: c.has_website,
+      hasSubscription: c.has_subscription,
+      monthlyAmount: parsed,
+    });
   };
 
   const confirmBilling = async () => {
@@ -220,6 +228,7 @@ export default function Admin() {
     const current = clients?.find((c) => c.email === pendingBilling.email);
     const previousBilling = {
       has_website: current?.has_website ?? false,
+      has_subscription: current?.has_subscription ?? false,
       monthly_amount: current?.monthly_amount ?? null,
     };
 
@@ -231,7 +240,8 @@ export default function Admin() {
       body: JSON.stringify({
         email: pendingBilling.email,
         hasWebsite: pendingBilling.hasWebsite,
-        monthlyAmount: pendingBilling.monthlyAmount,
+        hasSubscription: pendingBilling.hasSubscription,
+        monthlyAmount: pendingBilling.hasSubscription ? pendingBilling.monthlyAmount : null,
       }),
     });
     const body = await res.json();
@@ -277,6 +287,7 @@ export default function Admin() {
         body: JSON.stringify({
           email: lastAction.email,
           hasWebsite: lastAction.previousBilling.has_website,
+          hasSubscription: lastAction.previousBilling.has_subscription,
           monthlyAmount: lastAction.previousBilling.monthly_amount,
         }),
       });
@@ -292,7 +303,7 @@ export default function Admin() {
     return acc;
   }, {});
   const maxCount = Math.max(1, ...Object.values(planCounts));
-  const totalSubscriptions = clients?.length ?? 0;
+  const totalSubscriptions = (clients ?? []).filter((c) => c.has_subscription).length;
   const totalMonthlyRevenue = (clients ?? []).reduce((sum, c) => sum + (c.monthly_amount ?? 0), 0);
   const websitesBuilt = (clients ?? []).filter((c) => c.has_website).length;
   const websiteRevenue = websitesBuilt * WEBSITE_BUILD_PRICE;
@@ -415,19 +426,21 @@ export default function Admin() {
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">
                     <colgroup>
-                      <col style={{ width: "22%" }} />
+                      <col style={{ width: "19%" }} />
+                      <col style={{ width: "12%" }} />
                       <col style={{ width: "14%" }} />
-                      <col style={{ width: "16%" }} />
-                      <col style={{ width: "11%" }} />
                       <col style={{ width: "9%" }} />
                       <col style={{ width: "10%" }} />
-                      <col style={{ width: "18%" }} />
+                      <col style={{ width: "8%" }} />
+                      <col style={{ width: "9%" }} />
+                      <col style={{ width: "19%" }} />
                     </colgroup>
                     <thead>
                       <tr>
                         <th>Email</th>
                         <th>Business name</th>
                         <th>Plan</th>
+                        <th>Sub.</th>
                         <th>Monthly $</th>
                         <th>Website</th>
                         <th>Since</th>
@@ -456,6 +469,20 @@ export default function Admin() {
                               ))}
                             </select>
                           </td>
+                          <td style={{ textAlign: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={c.has_subscription}
+                              onChange={(e) =>
+                                setPendingBilling({
+                                  email: c.email,
+                                  hasWebsite: c.has_website,
+                                  hasSubscription: e.target.checked,
+                                  monthlyAmount: e.target.checked ? c.monthly_amount : null,
+                                })
+                              }
+                            />
+                          </td>
                           <td>
                             <input
                               type="number"
@@ -463,7 +490,12 @@ export default function Admin() {
                               step="1"
                               className="ws-admin-billing-input"
                               placeholder="—"
-                              value={billingDrafts[c.email] ?? (c.monthly_amount != null ? String(c.monthly_amount) : "")}
+                              disabled={!c.has_subscription}
+                              value={
+                                c.has_subscription
+                                  ? billingDrafts[c.email] ?? (c.monthly_amount != null ? String(c.monthly_amount) : "")
+                                  : ""
+                              }
                               onChange={(e) =>
                                 setBillingDrafts((prev) => ({ ...prev, [c.email]: e.target.value }))
                               }
@@ -481,6 +513,7 @@ export default function Admin() {
                                 setPendingBilling({
                                   email: c.email,
                                   hasWebsite: e.target.checked,
+                                  hasSubscription: c.has_subscription,
                                   monthlyAmount: c.monthly_amount,
                                 })
                               }
@@ -575,7 +608,14 @@ export default function Admin() {
             <p>
               Website build: {pendingBilling.hasWebsite ? `Yes ($${WEBSITE_BUILD_PRICE.toLocaleString()})` : "No"}
               <br />
-              Monthly amount: {pendingBilling.monthlyAmount != null ? `$${pendingBilling.monthlyAmount.toLocaleString()}` : "Not set"}
+              Monthly subscription: {pendingBilling.hasSubscription ? "Yes" : "No"}
+              <br />
+              Monthly amount:{" "}
+              {pendingBilling.hasSubscription
+                ? pendingBilling.monthlyAmount != null
+                  ? `$${pendingBilling.monthlyAmount.toLocaleString()}`
+                  : "Not set"
+                : "—"}
             </p>
             {billingError && <p className="ws-portal-error">{billingError}</p>}
             <div className="ws-confirm-actions">

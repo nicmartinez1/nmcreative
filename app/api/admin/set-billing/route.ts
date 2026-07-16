@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
-  const { email, hasWebsite, monthlyAmount } = await request.json();
+  const { email, hasWebsite, hasSubscription, monthlyAmount } = await request.json();
   if (!email) {
     return NextResponse.json({ error: "Missing email." }, { status: 400 });
   }
@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     {
       user_id: matchedUser.id,
       has_website: !!hasWebsite,
-      monthly_amount: monthlyAmount === null || monthlyAmount === undefined ? null : monthlyAmount,
+      has_subscription: !!hasSubscription,
+      monthly_amount: hasSubscription && monthlyAmount !== null && monthlyAmount !== undefined ? monthlyAmount : null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

@@ -27,11 +27,12 @@ create policy "Clients can insert their own plan changes"
 -- Per-client billing details set by you from the admin dashboard only
 -- (clients never fill this in themselves): whether you built them a
 -- website (a fixed, one-time $2,000 sale, separate from their monthly
--- service plan) and the exact monthly amount they're actually billed
--- for their plan.
+-- service plan), whether they're currently on a monthly subscription
+-- at all, and — only if so — the exact monthly amount they're billed.
 create table public.client_profiles (
   user_id uuid primary key references auth.users (id),
   has_website boolean not null default false,
+  has_subscription boolean not null default false,
   monthly_amount numeric,
   updated_at timestamptz not null default now()
 );
@@ -43,17 +44,21 @@ create policy "Clients can view their own profile"
   using (auth.uid() = user_id);
 
 -- If you already ran an earlier version of this file, client_profiles
--- exists with an old "website" text column instead, and
--- client_current_plans still reads from it. Run this instead of the
--- "create table" above to migrate it (drop the view FIRST, since it
--- depends on the "website" column — dropping the column before the
--- view errors with "cannot drop column ... because other objects
--- depend on it"):
+-- exists already (with or without a "website" text column), and
+-- client_current_plans still reads the old shape. Run this instead of
+-- the "create table" above to migrate it (drop the view FIRST if it
+-- depends on a "website" column you're removing — dropping a column
+-- before the view errors with "cannot drop column ... because other
+-- objects depend on it"):
 -- drop view if exists public.client_current_plans;
 -- alter table public.client_profiles
 --   add column if not exists has_website boolean not null default false,
+--   add column if not exists has_subscription boolean not null default false,
 --   add column if not exists monthly_amount numeric;
 -- alter table public.client_profiles drop column if exists website;
+-- -- Anyone with a monthly_amount already set was implicitly a
+-- -- subscriber under the old shape — carry that forward:
+-- update public.client_profiles set has_subscription = true where monthly_amount is not null;
 
 -- Admin view: one row per client showing their CURRENT plan (the most
 -- recent entry in plan_changes), their billing details, and their
@@ -65,6 +70,7 @@ select distinct on (pc.user_id)
   pc.plan_name as current_plan,
   pc.changed_at as plan_since,
   coalesce(cp.has_website, false) as has_website,
+  coalesce(cp.has_subscription, false) as has_subscription,
   cp.monthly_amount
 from public.plan_changes pc
 join auth.users u on u.id = pc.user_id

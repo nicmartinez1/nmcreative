@@ -2396,6 +2396,12 @@ button:focus-visible {
   color: inherit;
 }
 
+.ws-admin-billing-input:disabled {
+  background: rgba(21, 14, 40, 0.04);
+  color: rgba(21, 14, 40, 0.35);
+  cursor: not-allowed;
+}
+
 .ws-admin-table th {
   font-family: var(--font-mono);
   font-size: 0.72rem;
