@@ -18,7 +18,7 @@ type Client = {
   email: string;
   current_plan: string;
   plan_since: string;
-  website: string | null;
+  business_name: string | null;
 };
 
 export default function Admin() {
@@ -31,10 +31,15 @@ export default function Admin() {
   const [clients, setClients] = useState<Client[] | null>(null);
   const [loadError, setLoadError] = useState("");
   const [pendingChange, setPendingChange] = useState<{ email: string; planName: string } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
   const [changeError, setChangeError] = useState("");
-  const [websiteDrafts, setWebsiteDrafts] = useState<Record<string, string>>({});
-  const [savingWebsite, setSavingWebsite] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<{
+    label: string;
+    email: string;
+    previousPlan: string | null;
+  } | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   const fetchClients = async () => {
     setLoadError("");
@@ -53,28 +58,6 @@ export default function Admin() {
       return;
     }
     setClients(body.clients);
-    setWebsiteDrafts(
-      Object.fromEntries((body.clients as Client[]).map((c) => [c.email, c.website ?? ""]))
-    );
-  };
-
-  const handleSaveWebsite = async (clientEmail: string) => {
-    setSavingWebsite(clientEmail);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    const res = await fetch("/api/admin/set-website", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email: clientEmail, website: websiteDrafts[clientEmail] }),
-    });
-    setSavingWebsite(null);
-
-    if (!res.ok) {
-      const body = await res.json();
-      window.alert(body.error ?? "Couldn't save website.");
-      return;
-    }
-    fetchClients();
   };
 
   useEffect(() => {
@@ -99,6 +82,12 @@ export default function Admin() {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!lastAction) return;
+    const timer = setTimeout(() => setLastAction(null), 8000);
+    return () => clearTimeout(timer);
+  }, [lastAction]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -129,6 +118,8 @@ export default function Admin() {
     setChangingPlan(true);
     setChangeError("");
 
+    const previousPlan = clients?.find((c) => c.email === pendingChange.email)?.current_plan ?? null;
+
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
     const res = await fetch("/api/admin/set-plan", {
@@ -144,7 +135,63 @@ export default function Admin() {
       return;
     }
 
+    setLastAction({
+      label: `Changed ${pendingChange.email} to ${pendingChange.planName}.`,
+      email: pendingChange.email,
+      previousPlan,
+    });
     setPendingChange(null);
+    fetchClients();
+  };
+
+  const confirmRemovePlan = async () => {
+    if (!pendingRemoval) return;
+    setChangingPlan(true);
+    setChangeError("");
+
+    const previousPlan = clients?.find((c) => c.email === pendingRemoval)?.current_plan ?? null;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/remove-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ email: pendingRemoval }),
+    });
+    const body = await res.json();
+    setChangingPlan(false);
+
+    if (!res.ok) {
+      setChangeError(body.error ?? "Couldn't remove subscription.");
+      return;
+    }
+
+    setLastAction({
+      label: `Removed ${pendingRemoval}'s subscription.`,
+      email: pendingRemoval,
+      previousPlan,
+    });
+    setPendingRemoval(null);
+    fetchClients();
+  };
+
+  const undoLastAction = async () => {
+    if (!lastAction?.previousPlan) {
+      setLastAction(null);
+      return;
+    }
+    setUndoing(true);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    await fetch("/api/admin/set-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ email: lastAction.email, planName: lastAction.previousPlan }),
+    });
+
+    setUndoing(false);
+    setLastAction(null);
     fetchClients();
   };
 
@@ -267,53 +314,45 @@ export default function Admin() {
                     <thead>
                       <tr>
                         <th>Email</th>
-                        <th>Website</th>
+                        <th>Business name</th>
                         <th>Current plan</th>
                         <th>Since</th>
                         <th>Change plan</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {clients.map((c) => (
                         <tr key={c.email}>
                           <td>{c.email}</td>
-                          <td>
-                            <div className="ws-admin-website-cell">
-                              <input
-                                type="text"
-                                placeholder="clientsite.com"
-                                value={websiteDrafts[c.email] ?? ""}
-                                onChange={(e) =>
-                                  setWebsiteDrafts((prev) => ({ ...prev, [c.email]: e.target.value }))
-                                }
-                              />
-                              {websiteDrafts[c.email] !== (c.website ?? "") && (
-                                <button
-                                  type="button"
-                                  className="ws-btn-ghost"
-                                  onClick={() => handleSaveWebsite(c.email)}
-                                  disabled={savingWebsite === c.email}
-                                >
-                                  {savingWebsite === c.email ? "Saving…" : "Save"}
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                          <td>{c.business_name || "—"}</td>
                           <td>{c.current_plan}</td>
                           <td>{new Date(c.plan_since).toLocaleDateString()}</td>
                           <td>
-                            <div className="ws-admin-plan-actions">
-                              {PLAN_NAMES.filter((p) => p !== c.current_plan).map((p) => (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  className="ws-btn-ghost"
-                                  onClick={() => setPendingChange({ email: c.email, planName: p })}
-                                >
-                                  → {p}
-                                </button>
+                            <select
+                              className="ws-admin-plan-select"
+                              value={c.current_plan}
+                              onChange={(e) => {
+                                if (e.target.value !== c.current_plan) {
+                                  setPendingChange({ email: c.email, planName: e.target.value });
+                                }
+                              }}
+                            >
+                              {PLAN_NAMES.map((p) => (
+                                <option key={p} value={p}>
+                                  {p}
+                                </option>
                               ))}
-                            </div>
+                            </select>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="ws-btn-ghost"
+                              onClick={() => setPendingRemoval(c.email)}
+                            >
+                              Remove
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -359,6 +398,41 @@ export default function Admin() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {pendingRemoval && (
+        <div className="ws-confirm-overlay" onClick={() => setPendingRemoval(null)}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">Confirm removal</span>
+            <h3>Remove {pendingRemoval}&rsquo;s subscription?</h3>
+            <p>This clears their plan entirely — they&rsquo;ll no longer show as an active subscriber.</p>
+            {changeError && <p className="ws-portal-error">{changeError}</p>}
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={() => setPendingRemoval(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="ws-btn-primary"
+                onClick={confirmRemovePlan}
+                disabled={changingPlan}
+              >
+                {changingPlan ? "Removing…" : "Yes, remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lastAction && (
+        <div className="ws-toast ws-admin-undo-toast" role="status">
+          {lastAction.label}
+          {lastAction.previousPlan && (
+            <button type="button" className="ws-btn-ghost" onClick={undoLastAction} disabled={undoing}>
+              {undoing ? "Undoing…" : "Undo"}
+            </button>
+          )}
         </div>
       )}
     </div>

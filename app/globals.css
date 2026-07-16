@@ -2035,6 +2035,20 @@ button.ws-btn-ghost:disabled {
   color: var(--growth-soft);
 }
 
+.ws-admin-undo-toast {
+  animation: ws-toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  white-space: normal;
+}
+
+.ws-admin-undo-toast .ws-btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
 @keyframes ws-toast-in {
   from {
     opacity: 0;
@@ -2277,34 +2291,6 @@ button:focus-visible {
   color: rgba(21, 14, 40, 0.6);
 }
 
-.ws-admin-plan-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-}
-
-.ws-admin-website-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.ws-admin-website-cell input {
-  font-family: var(--font-body);
-  font-size: 0.88rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--paper);
-  min-width: 11rem;
-}
-
-.ws-admin-website-cell input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
 .ws-admin-chart {
   max-width: 46rem;
   margin: 0 auto 3rem;
@@ -2346,9 +2332,8 @@ button:focus-visible {
 }
 
 .ws-admin-table-wrap {
-  max-width: 46rem;
+  max-width: 68rem;
   margin: 0 auto;
-  overflow-x: auto;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 20px;
@@ -2356,6 +2341,7 @@ button:focus-visible {
 
 .ws-admin-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
@@ -2363,9 +2349,20 @@ button:focus-visible {
 .ws-admin-table th,
 .ws-admin-table td {
   text-align: left;
-  padding: 0.9rem 1.25rem;
+  padding: 0.9rem 1rem;
   border-bottom: 1px solid var(--line);
-  white-space: nowrap;
+  overflow-wrap: break-word;
+}
+
+.ws-admin-plan-select {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--paper);
 }
 
 .ws-admin-table th {

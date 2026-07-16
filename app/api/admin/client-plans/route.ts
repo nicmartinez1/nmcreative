@@ -23,5 +23,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ clients: data });
+  const { data: userList, error: userListError } = await supabaseAdmin.auth.admin.listUsers({
+    perPage: 1000,
+  });
+  if (userListError) {
+    return NextResponse.json({ error: userListError.message }, { status: 500 });
+  }
+
+  const businessNameByEmail = new Map<string | undefined, string | undefined>(
+    userList.users.map((u): [string | undefined, string | undefined] => [
+      u.email?.toLowerCase(),
+      u.user_metadata?.business_name,
+    ])
+  );
+
+  const clients = data.map((c) => ({
+    ...c,
+    business_name: businessNameByEmail.get(c.email?.toLowerCase()) || c.website || null,
+  }));
+
+  return NextResponse.json({ clients });
 }

@@ -90,6 +90,7 @@ export default function ClientAccess() {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
@@ -192,7 +193,10 @@ export default function ClientAccess() {
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/client-access` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/client-access`,
+        data: { business_name: businessName },
+      },
     });
     setSubmitting(false);
 
@@ -401,6 +405,18 @@ export default function ClientAccess() {
                       mode === "login" ? handleLogin : mode === "signup" ? handleSignup : handleForgotPassword
                     }
                   >
+                    {mode === "signup" && (
+                      <label className="ws-form-field">
+                        <span>Business name</span>
+                        <input
+                          type="text"
+                          placeholder="Riverside Coffee Co."
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          required
+                        />
+                      </label>
+                    )}
                     <label className="ws-form-field">
                       <span>Email</span>
                       <input

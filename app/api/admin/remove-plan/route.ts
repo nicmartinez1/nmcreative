@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
-  const { email, website } = await request.json();
+  const { email } = await request.json();
   if (!email) {
     return NextResponse.json({ error: "Missing email." }, { status: 400 });
   }
@@ -24,12 +24,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Couldn't find a client with email ${email}.` }, { status: 404 });
   }
 
-  const { error: upsertError } = await supabaseAdmin
-    .from("client_profiles")
-    .upsert({ user_id: matchedUser.id, website, updated_at: new Date().toISOString() });
+  const { error: deleteError } = await supabaseAdmin
+    .from("plan_changes")
+    .delete()
+    .eq("user_id", matchedUser.id);
 
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 });
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
