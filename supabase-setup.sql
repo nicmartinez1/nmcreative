@@ -64,7 +64,13 @@ create policy "Clients can view their own profile"
 -- recent entry in plan_changes), their billing details, and their
 -- email. Query this anytime from the SQL Editor to see who's on what
 -- plan and what they're actually paying.
-create or replace view public.client_current_plans as
+--
+-- "create or replace view" can only APPEND new columns at the end —
+-- inserting has_subscription before monthly_amount counts as renaming
+-- an existing column, which Postgres rejects. Drop the view first
+-- whenever the column list changes shape, then recreate it:
+drop view if exists public.client_current_plans;
+create view public.client_current_plans as
 select distinct on (pc.user_id)
   u.email,
   pc.plan_name as current_plan,
