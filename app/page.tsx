@@ -382,6 +382,7 @@ const plans = [
       "Everything in Growth SEO",
       "Social media management",
       "Ad campaign management",
+      "Customer rewards & loyalty setup (e.g. Toast, for restaurants)",
       "Projected additional followers and up to 3x more customers",
     ],
   },

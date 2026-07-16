@@ -30,6 +30,19 @@ function Reveal({
   );
 }
 
+function Toast({ planName, onDismiss }: { planName: string; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(timer);
+  }, [planName, onDismiss]);
+
+  return (
+    <div className="ws-toast" role="status">
+      ✓ You&rsquo;ve switched to <strong>{planName}</strong>.
+    </div>
+  );
+}
+
 const plans = [
   {
     name: "Website Care",
@@ -65,6 +78,7 @@ const plans = [
       "Everything in Growth SEO",
       "Social media management",
       "Ad campaign management",
+      "Customer rewards & loyalty setup (e.g. Toast, for restaurants)",
       "Projected additional followers and up to 3x more customers",
     ],
   },
@@ -79,9 +93,10 @@ export default function ClientAccess() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
-  const [switchingPlan, setSwitchingPlan] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [switchConfirmation, setSwitchConfirmation] = useState("");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [signupSent, setSignupSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [authHash] = useState(() => (typeof window !== "undefined" ? window.location.hash : ""));
   const [passwordSet, setPasswordSet] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -182,6 +197,28 @@ export default function ClientAccess() {
     }
   };
 
+  const handleForgotPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+
+    if (!isSupabaseConfigured) {
+      setError("Login isn't connected yet — add your Supabase credentials to .env.local.");
+      return;
+    }
+
+    setSubmitting(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/client-access`,
+    });
+    setSubmitting(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+    setResetSent(true);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setLoggedIn(false);
@@ -190,13 +227,20 @@ export default function ClientAccess() {
 
   const handleSwitchPlan = async (planName: string) => {
     if (!userId) return;
-    setSwitchingPlan(true);
+    if (!window.confirm(`Switch to ${planName}? This will be reflected in your next billing cycle.`)) {
+      return;
+    }
+
+    // Update the UI right away so it always feels instant; log any
+    // billing-history write failure quietly instead of interrupting.
+    setCurrentPlan(planName);
+    setSwitchConfirmation(planName);
+
     const { error: insertError } = await supabase
       .from("plan_changes")
       .insert({ user_id: userId, plan_name: planName });
-    setSwitchingPlan(false);
-    if (!insertError) {
-      setCurrentPlan(planName);
+    if (insertError) {
+      console.error("Couldn't record plan change for billing:", insertError.message);
     }
   };
 
@@ -269,11 +313,16 @@ export default function ClientAccess() {
           <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
             <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
               <span className="ws-eyebrow">Client access</span>
-              <h2>{mode === "login" ? "Welcome back." : "Create your account."}</h2>
+              <h2>
+                {mode === "login" && "Welcome back."}
+                {mode === "signup" && "Create your account."}
+                {mode === "forgot" && "Reset your password."}
+              </h2>
               <p>
-                {mode === "login"
-                  ? "Log in to check your project status, reach your support team, or upgrade your plan."
-                  : "Set up your own login in seconds — no need to wait on an invite."}
+                {mode === "login" &&
+                  "Log in to check your project status, reach your support team, or upgrade your plan."}
+                {mode === "signup" && "Set up your own login in seconds — no need to wait on an invite."}
+                {mode === "forgot" && "We'll email you a link to set a new password."}
               </p>
             </Reveal>
           </header>
@@ -300,9 +349,33 @@ export default function ClientAccess() {
                     .
                   </p>
                 </div>
+              ) : resetSent ? (
+                <div className="ws-form-success">
+                  <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>Check your inbox</span>
+                  <h3>Password reset link sent.</h3>
+                  <p>
+                    We sent a reset link to <strong>{email}</strong>. Click it to
+                    choose a new password.
+                  </p>
+                  <button
+                    type="button"
+                    className="ws-btn-ghost"
+                    onClick={() => {
+                      setResetSent(false);
+                      setMode("login");
+                    }}
+                  >
+                    Back to log in
+                  </button>
+                </div>
               ) : (
                 <>
-                  <form className="ws-form" onSubmit={mode === "login" ? handleLogin : handleSignup}>
+                  <form
+                    className="ws-form"
+                    onSubmit={
+                      mode === "login" ? handleLogin : mode === "signup" ? handleSignup : handleForgotPassword
+                    }
+                  >
                     <label className="ws-form-field">
                       <span>Email</span>
                       <input
@@ -313,30 +386,48 @@ export default function ClientAccess() {
                         required
                       />
                     </label>
-                    <label className="ws-form-field">
-                      <span>Password</span>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={mode === "signup" ? 6 : undefined}
-                        required
-                      />
-                    </label>
+                    {mode !== "forgot" && (
+                      <label className="ws-form-field">
+                        <span>Password</span>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          minLength={mode === "signup" ? 6 : undefined}
+                          required
+                        />
+                      </label>
+                    )}
+                    {mode === "login" && (
+                      <button
+                        type="button"
+                        className="ws-btn-ghost ws-portal-forgot-link"
+                        onClick={() => {
+                          setMode("forgot");
+                          setError("");
+                        }}
+                      >
+                        Forgot password?
+                      </button>
+                    )}
                     {error && <p className="ws-portal-error">{error}</p>}
                     <button type="submit" className="ws-btn-primary" disabled={submitting}>
                       {submitting
                         ? mode === "login"
                           ? "Logging in…"
-                          : "Creating account…"
+                          : mode === "signup"
+                            ? "Creating account…"
+                            : "Sending…"
                         : mode === "login"
                           ? "Log in"
-                          : "Create account"}
+                          : mode === "signup"
+                            ? "Create account"
+                            : "Send reset link"}
                     </button>
                   </form>
                   <p className="ws-portal-signup-note">
-                    {mode === "login" ? (
+                    {mode === "login" && (
                       <>
                         New client?{" "}
                         <button
@@ -350,7 +441,8 @@ export default function ClientAccess() {
                           Create an account
                         </button>
                       </>
-                    ) : (
+                    )}
+                    {(mode === "signup" || mode === "forgot") && (
                       <>
                         Already have an account?{" "}
                         <button
@@ -379,7 +471,6 @@ export default function ClientAccess() {
               <h2>
                 Welcome back{email ? `, ${email.split("@")[0]}` : ""}.
               </h2>
-              <p>Here&rsquo;s where your project stands, and how to reach us.</p>
               <button type="button" className="ws-btn-ghost" onClick={handleLogout}>
                 Log out
               </button>
@@ -461,10 +552,9 @@ export default function ClientAccess() {
                       <button
                         type="button"
                         className="ws-btn-primary"
-                        disabled={switchingPlan}
                         onClick={() => handleSwitchPlan(plan.name)}
                       >
-                        {switchingPlan ? "Switching…" : "Switch to this plan"}
+                        Switch to this plan
                       </button>
                     )}
                   </Reveal>
@@ -491,6 +581,10 @@ export default function ClientAccess() {
         </span>
         <span>Web design · Social Media · Ads · SEO</span>
       </footer>
+
+      {switchConfirmation && (
+        <Toast planName={switchConfirmation} onDismiss={() => setSwitchConfirmation("")} />
+      )}
     </div>
   );
 }

@@ -1828,6 +1828,15 @@ button.ws-btn-ghost:disabled {
   color: rgba(21, 14, 40, 0.65);
 }
 
+.ws-portal-forgot-link {
+  display: block;
+  margin: -0.75rem 0 0.25rem;
+  font-size: 0.82rem;
+  text-align: right;
+  width: fit-content;
+  margin-left: auto;
+}
+
 .ws-portal-error {
   font-size: 0.85rem;
   color: var(--growth-soft);
@@ -1932,6 +1941,82 @@ button.ws-btn-ghost:disabled {
   }
 }
 
+.ws-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  z-index: 60;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #fff;
+  background: var(--paper);
+  border-radius: 999px;
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 20px 45px -18px rgba(21, 14, 40, 0.5);
+  white-space: nowrap;
+  animation: ws-toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1), ws-toast-out 0.35s ease 3.65s forwards;
+}
+
+.ws-toast strong {
+  color: var(--growth-soft);
+}
+
+@keyframes ws-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes ws-toast-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+}
+
+@media (max-width: 560px) {
+  .ws-toast {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    transform: none;
+    white-space: normal;
+    text-align: center;
+  }
+
+  @keyframes ws-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes ws-toast-out {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+}
+
 .ws-plan-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1949,13 +2034,18 @@ button.ws-btn-ghost:disabled {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--plan-color, var(--accent)) 25%, transparent);
+  border: 1px solid var(--line);
   border-top-width: 3px;
   border-radius: 22px;
   padding: 2rem 1.75rem;
   opacity: 0;
   transform: translateY(24px);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s ease;
+  transition:
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.7s ease,
+    border-color 0.4s ease,
+    background 0.4s ease,
+    box-shadow 0.4s ease;
 }
 
 .ws-plan-card.ws-in-view {
@@ -1963,14 +2053,28 @@ button.ws-btn-ghost:disabled {
   transform: translateY(0);
 }
 
-.ws-plan-card.is-featured {
-  box-shadow: 0 30px 70px -35px color-mix(in srgb, var(--plan-color, var(--accent)) 55%, transparent);
+.ws-plan-card.is-featured:not(.is-current) {
+  box-shadow: 0 20px 50px -35px color-mix(in srgb, var(--plan-color, var(--accent)) 30%, transparent);
 }
 
 .ws-plan-card.is-current {
   border-color: var(--plan-color, var(--accent));
   border-width: 2px;
   background: color-mix(in srgb, var(--plan-color, var(--accent)) 5%, #fff);
+  box-shadow: 0 20px 45px -25px color-mix(in srgb, var(--plan-color, var(--accent)) 60%, transparent);
+  animation: ws-plan-select-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ws-plan-select-pop {
+  0% {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .ws-plan-badge {
