@@ -95,6 +95,7 @@ export default function ClientAccess() {
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
   const [lastChangedAt, setLastChangedAt] = useState<string | null>(null);
+  const [hasWebsite, setHasWebsite] = useState(false);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -119,6 +120,13 @@ export default function ClientAccess() {
       setCurrentPlan(data.plan_name);
       setLastChangedAt(data.changed_at);
     }
+
+    const { data: profile } = await supabase
+      .from("client_profiles")
+      .select("has_website")
+      .eq("user_id", uid)
+      .maybeSingle();
+    setHasWebsite(profile?.has_website ?? false);
   };
 
   const PLAN_COOLDOWN_DAYS = 30;
@@ -522,6 +530,14 @@ export default function ClientAccess() {
               </button>
             </Reveal>
           </header>
+
+          {hasWebsite && (
+            <section className="ws-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
+              <Reveal className="ws-portal-website-banner">
+                🎉 Your website is complete and live!
+              </Reveal>
+            </section>
+          )}
 
           <section className="ws-section" style={{ paddingTop: 0 }}>
             <Reveal className="ws-portal-support-banner">

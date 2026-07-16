@@ -1880,6 +1880,20 @@ button.ws-btn-ghost:disabled {
   margin-bottom: 1.1rem;
 }
 
+.ws-portal-website-banner {
+  max-width: 46rem;
+  margin: 0 auto 1.5rem;
+  padding: 1.1rem 1.5rem;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--growth-soft) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--growth-soft) 35%, transparent);
+  color: var(--growth-soft);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 .ws-portal-support-banner {
   display: flex;
   flex-wrap: wrap;
