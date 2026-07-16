@@ -24,16 +24,32 @@ create policy "Clients can insert their own plan changes"
 -- Table Editor (Table Editor -> plan_changes) regardless of RLS, since
 -- the dashboard uses your privileged service role.
 
+-- Links each client to the actual website you built for them (set by
+-- you from the admin dashboard — clients never fill this in themselves).
+create table public.client_profiles (
+  user_id uuid primary key references auth.users (id),
+  website text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.client_profiles enable row level security;
+
+create policy "Clients can view their own profile"
+  on public.client_profiles for select
+  using (auth.uid() = user_id);
+
 -- Admin view: one row per client showing their CURRENT plan (the most
--- recent entry in plan_changes) alongside their email. Query this
--- anytime from the SQL Editor to see who's on what plan.
+-- recent entry in plan_changes), their website, and their email. Query
+-- this anytime from the SQL Editor to see who's on what plan.
 create or replace view public.client_current_plans as
 select distinct on (pc.user_id)
   u.email,
   pc.plan_name as current_plan,
-  pc.changed_at as plan_since
+  pc.changed_at as plan_since,
+  cp.website
 from public.plan_changes pc
 join auth.users u on u.id = pc.user_id
+left join public.client_profiles cp on cp.user_id = pc.user_id
 order by pc.user_id, pc.changed_at desc;
 
 -- Locked down to the SQL Editor / dashboard only — not exposed through
@@ -46,15 +62,14 @@ revoke all on public.client_current_plans from anon, authenticated;
 
 -- Cooldown: reject a plan change if the client's last one was less than
 -- 30 days ago, so plans can't be switched repeatedly mid-billing-cycle.
--- Skipped when run from the SQL Editor / dashboard (connects as
--- "postgres"), so you as the admin can always override a client's plan
--- or clear their lock without hitting the same restriction.
+-- Skipped for the SQL Editor / dashboard ("postgres") and for the admin
+-- dashboard's API route, which writes using the service_role key.
 create or replace function public.enforce_plan_change_cooldown()
 returns trigger as $$
 declare
   last_change timestamptz;
 begin
-  if current_user = 'postgres' then
+  if current_user in ('postgres', 'service_role') then
     return new;
   end if;
 

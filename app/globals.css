@@ -1955,6 +1955,65 @@ button.ws-btn-ghost:disabled {
   }
 }
 
+.ws-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(21, 14, 40, 0.55);
+  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+  animation: ws-confirm-fade-in 0.2s ease;
+}
+
+.ws-confirm-modal {
+  background: #fff;
+  border-radius: 24px;
+  padding: 2rem 2.25rem;
+  max-width: 26rem;
+  width: 100%;
+  box-shadow: 0 40px 80px -30px rgba(21, 14, 40, 0.5);
+  animation: ws-plan-select-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ws-confirm-modal h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.5rem;
+}
+
+.ws-confirm-modal p {
+  font-size: 0.95rem;
+  color: rgba(21, 14, 40, 0.68);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.ws-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+}
+
+@keyframes ws-confirm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .ws-confirm-actions {
+    justify-content: space-between;
+  }
+}
+
 .ws-toast {
   position: fixed;
   left: 50%;
@@ -2178,4 +2237,145 @@ a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* ---------- admin dashboard ---------- */
+.ws-admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.ws-admin-stats {
+  max-width: 46rem;
+  margin: 0 auto 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.ws-admin-stat {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.ws-admin-stat-number {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.ws-admin-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: rgba(21, 14, 40, 0.6);
+}
+
+.ws-admin-plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.ws-admin-website-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ws-admin-website-cell input {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--paper);
+  min-width: 11rem;
+}
+
+.ws-admin-website-cell input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ws-admin-chart {
+  max-width: 46rem;
+  margin: 0 auto 3rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.ws-admin-chart-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 2.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ws-admin-chart-label {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: rgba(21, 14, 40, 0.7);
+}
+
+.ws-admin-chart-track {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.ws-admin-chart-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ws-admin-chart-count {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+  color: rgba(21, 14, 40, 0.6);
+}
+
+.ws-admin-table-wrap {
+  max-width: 46rem;
+  margin: 0 auto;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+
+.ws-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ws-admin-table th,
+.ws-admin-table td {
+  text-align: left;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.ws-admin-table th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(21, 14, 40, 0.5);
+}
+
+.ws-admin-table tr:last-child td {
+  border-bottom: none;
 }

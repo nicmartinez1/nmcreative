@@ -95,6 +95,7 @@ export default function ClientAccess() {
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
   const [lastChangedAt, setLastChangedAt] = useState<string | null>(null);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [signupSent, setSignupSent] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -235,11 +236,17 @@ export default function ClientAccess() {
     setUserId(null);
   };
 
-  const handleSwitchPlan = async (planName: string) => {
+  const requestSwitchPlan = (planName: string) => {
     if (!userId || isLocked) return;
-    if (!window.confirm(`Switch to ${planName}? This will be reflected in your next billing cycle.`)) {
-      return;
-    }
+    setPendingPlan(planName);
+  };
+
+  const cancelSwitchPlan = () => setPendingPlan(null);
+
+  const confirmSwitchPlan = async () => {
+    if (!pendingPlan) return;
+    const planName = pendingPlan;
+    setPendingPlan(null);
 
     const previousPlan = currentPlan;
     const previousChangedAt = lastChangedAt;
@@ -489,6 +496,11 @@ export default function ClientAccess() {
               <h2>
                 Welcome back{email ? `, ${email.split("@")[0]}` : ""}.
               </h2>
+              {email.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase() && (
+                <Link href="/admin" className="ws-btn-ghost">
+                  Admin dashboard →
+                </Link>
+              )}
               <button type="button" className="ws-btn-ghost" onClick={handleLogout}>
                 Log out
               </button>
@@ -580,7 +592,7 @@ export default function ClientAccess() {
                       <button
                         type="button"
                         className="ws-btn-primary"
-                        onClick={() => handleSwitchPlan(plan.name)}
+                        onClick={() => requestSwitchPlan(plan.name)}
                       >
                         Switch to this plan
                       </button>
@@ -612,6 +624,24 @@ export default function ClientAccess() {
 
       {switchConfirmation && (
         <Toast planName={switchConfirmation} onDismiss={() => setSwitchConfirmation("")} />
+      )}
+
+      {pendingPlan && (
+        <div className="ws-confirm-overlay" onClick={cancelSwitchPlan}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">Confirm switch</span>
+            <h3>Switch to {pendingPlan}?</h3>
+            <p>This will be reflected in your next billing cycle.</p>
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={cancelSwitchPlan}>
+                Cancel
+              </button>
+              <button type="button" className="ws-btn-primary" onClick={confirmSwitchPlan}>
+                Yes, switch plan
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
