@@ -43,8 +43,13 @@ create policy "Clients can view their own profile"
   using (auth.uid() = user_id);
 
 -- If you already ran an earlier version of this file, client_profiles
--- exists with an old "website" text column instead. Run this instead
--- of the "create table" above to migrate it:
+-- exists with an old "website" text column instead, and
+-- client_current_plans still reads from it. Run this instead of the
+-- "create table" above to migrate it (drop the view FIRST, since it
+-- depends on the "website" column — dropping the column before the
+-- view errors with "cannot drop column ... because other objects
+-- depend on it"):
+-- drop view if exists public.client_current_plans;
 -- alter table public.client_profiles
 --   add column if not exists has_website boolean not null default false,
 --   add column if not exists monthly_amount numeric;
