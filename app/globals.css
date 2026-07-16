@@ -702,6 +702,20 @@ body {
   box-shadow: 0 10px 34px -6px rgba(155, 107, 255, 0.55), 0 0 28px 4px rgba(255, 61, 122, 0.3);
 }
 
+.ws-btn-primary:disabled {
+  background: var(--line);
+  color: rgba(21, 14, 40, 0.45);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ws-btn-primary:disabled:hover {
+  background: var(--line);
+  transform: none;
+  box-shadow: none;
+}
+
 .ws-btn-ghost {
   font-family: var(--font-mono);
   font-size: 0.85rem;

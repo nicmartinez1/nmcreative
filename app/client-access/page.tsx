@@ -93,6 +93,7 @@ export default function ClientAccess() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
+  const [lastChangedAt, setLastChangedAt] = useState<string | null>(null);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [signupSent, setSignupSent] = useState(false);
@@ -107,13 +108,22 @@ export default function ClientAccess() {
   const loadPlan = async (uid: string) => {
     const { data } = await supabase
       .from("plan_changes")
-      .select("plan_name")
+      .select("plan_name, changed_at")
       .eq("user_id", uid)
       .order("changed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (data) setCurrentPlan(data.plan_name);
+    if (data) {
+      setCurrentPlan(data.plan_name);
+      setLastChangedAt(data.changed_at);
+    }
   };
+
+  const PLAN_COOLDOWN_DAYS = 30;
+  const nextSwitchDate = lastChangedAt
+    ? new Date(new Date(lastChangedAt).getTime() + PLAN_COOLDOWN_DAYS * 24 * 60 * 60 * 1000)
+    : null;
+  const isLocked = !!nextSwitchDate && nextSwitchDate.getTime() > Date.now();
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -226,21 +236,29 @@ export default function ClientAccess() {
   };
 
   const handleSwitchPlan = async (planName: string) => {
-    if (!userId) return;
+    if (!userId || isLocked) return;
     if (!window.confirm(`Switch to ${planName}? This will be reflected in your next billing cycle.`)) {
       return;
     }
 
-    // Update the UI right away so it always feels instant; log any
-    // billing-history write failure quietly instead of interrupting.
+    const previousPlan = currentPlan;
+    const previousChangedAt = lastChangedAt;
+    const now = new Date().toISOString();
+
+    // Update the UI right away so it always feels instant; roll back if
+    // the write is rejected (e.g. still inside the cooldown window).
     setCurrentPlan(planName);
+    setLastChangedAt(now);
     setSwitchConfirmation(planName);
 
     const { error: insertError } = await supabase
       .from("plan_changes")
-      .insert({ user_id: userId, plan_name: planName });
+      .insert({ user_id: userId, plan_name: planName, changed_at: now });
     if (insertError) {
-      console.error("Couldn't record plan change for billing:", insertError.message);
+      setCurrentPlan(previousPlan);
+      setLastChangedAt(previousChangedAt);
+      setSwitchConfirmation("");
+      window.alert(insertError.message);
     }
   };
 
@@ -516,8 +534,14 @@ export default function ClientAccess() {
               <span className="ws-eyebrow">Subscription</span>
               <h2>Manage your plan.</h2>
               <p>
-                You&rsquo;re currently on <strong>{currentPlan}</strong>. Switch
-                any time — changes take effect on your next billing cycle.
+                You&rsquo;re currently on <strong>{currentPlan}</strong>.{" "}
+                {isLocked && nextSwitchDate
+                  ? `You can switch plans again on ${nextSwitchDate.toLocaleDateString(undefined, {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}.`
+                  : "Switch any time — changes take effect on your next billing cycle."}
               </p>
             </Reveal>
             <div className="ws-plan-grid">
@@ -548,6 +572,10 @@ export default function ClientAccess() {
                       <button type="button" className="ws-btn-ghost" disabled>
                         Your current plan
                       </button>
+                    ) : isLocked ? (
+                      <Link href="/contact" className="ws-btn-ghost">
+                        Contact to change plan
+                      </Link>
                     ) : (
                       <button
                         type="button"

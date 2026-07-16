@@ -43,3 +43,61 @@ revoke all on public.client_current_plans from anon, authenticated;
 
 -- To check current plans at any time, run:
 -- select * from public.client_current_plans order by plan_since desc;
+
+-- Cooldown: reject a plan change if the client's last one was less than
+-- 30 days ago, so plans can't be switched repeatedly mid-billing-cycle.
+-- Skipped when run from the SQL Editor / dashboard (connects as
+-- "postgres"), so you as the admin can always override a client's plan
+-- or clear their lock without hitting the same restriction.
+create or replace function public.enforce_plan_change_cooldown()
+returns trigger as $$
+declare
+  last_change timestamptz;
+begin
+  if current_user = 'postgres' then
+    return new;
+  end if;
+
+  select changed_at into last_change
+  from public.plan_changes
+  where user_id = new.user_id
+  order by changed_at desc
+  limit 1;
+
+  if last_change is not null and new.changed_at < last_change + interval '30 days' then
+    raise exception 'Plan changes are limited to once every 30 days. Next change available %',
+      to_char(last_change + interval '30 days', 'YYYY-MM-DD');
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists plan_change_cooldown on public.plan_changes;
+create trigger plan_change_cooldown
+  before insert on public.plan_changes
+  for each row execute function public.enforce_plan_change_cooldown();
+
+-- ---------------------------------------------------------------------
+-- Admin operations (run these from the SQL Editor whenever needed)
+-- ---------------------------------------------------------------------
+
+-- 1. Look up a client's user_id from their email:
+-- select id, email from auth.users where email = 'client@example.com';
+
+-- 2. Force-set a client's plan right now (bypasses the cooldown since
+--    you're running this as postgres; also resets their 30-day timer
+--    to start from now):
+-- insert into public.plan_changes (user_id, plan_name)
+-- values ('<user-id-from-step-1>', 'Growth+');
+
+-- 3. Clear a client's lock without changing their plan (backdates their
+--    last change so the 30-day cooldown reads as already expired):
+-- update public.plan_changes
+-- set changed_at = now() - interval '31 days'
+-- where id = (
+--   select id from public.plan_changes
+--   where user_id = '<user-id-from-step-1>'
+--   order by changed_at desc
+--   limit 1
+-- );
