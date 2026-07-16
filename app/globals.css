@@ -2361,8 +2361,8 @@ button:focus-visible {
 }
 
 .ws-admin-table {
-  width: 100%;
-  table-layout: auto;
+  width: auto;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
@@ -2379,7 +2379,11 @@ button:focus-visible {
 .ws-admin-table td.ws-admin-business-name {
   white-space: normal;
   overflow-wrap: break-word;
-  max-width: 11rem;
+}
+
+.ws-admin-table td.ws-admin-email-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ws-admin-plan-select {

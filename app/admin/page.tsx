@@ -16,6 +16,13 @@ const PLAN_NAMES = Object.keys(PLAN_COLORS);
 
 const WEBSITE_BUILD_PRICE = 2000;
 
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${mm}/${dd}/${d.getFullYear()}`;
+}
+
 type Client = {
   email: string;
   current_plan: string;
@@ -425,6 +432,16 @@ export default function Admin() {
 
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">
+                    <colgroup>
+                      <col style={{ width: "15rem" }} />
+                      <col style={{ width: "9rem" }} />
+                      <col style={{ width: "11.5rem" }} />
+                      <col style={{ width: "4rem" }} />
+                      <col style={{ width: "7.5rem" }} />
+                      <col style={{ width: "4rem" }} />
+                      <col style={{ width: "7rem" }} />
+                      <col style={{ width: "7rem" }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>Email</th>
@@ -440,7 +457,7 @@ export default function Admin() {
                     <tbody>
                       {clients.map((c) => (
                         <tr key={c.email}>
-                          <td>{c.email}</td>
+                          <td className="ws-admin-email-cell" title={c.email}>{c.email}</td>
                           <td className="ws-admin-business-name">{c.business_name || "—"}</td>
                           <td>
                             <select
@@ -509,7 +526,7 @@ export default function Admin() {
                               }
                             />
                           </td>
-                          <td>{new Date(c.plan_since).toLocaleDateString()}</td>
+                          <td>{formatDate(c.plan_since)}</td>
                           <td>
                             <button
                               type="button"
