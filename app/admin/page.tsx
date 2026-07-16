@@ -425,20 +425,10 @@ export default function Admin() {
 
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">
-                    <colgroup>
-                      <col style={{ width: "18%" }} />
-                      <col style={{ width: "11%" }} />
-                      <col style={{ width: "13%" }} />
-                      <col style={{ width: "8%" }} />
-                      <col style={{ width: "10%" }} />
-                      <col style={{ width: "8%" }} />
-                      <col style={{ width: "13%" }} />
-                      <col style={{ width: "19%" }} />
-                    </colgroup>
                     <thead>
                       <tr>
                         <th>Email</th>
-                        <th>Business name</th>
+                        <th className="ws-admin-business-name">Business name</th>
                         <th>Plan</th>
                         <th>Sub.</th>
                         <th>Monthly $</th>
@@ -451,7 +441,7 @@ export default function Admin() {
                       {clients.map((c) => (
                         <tr key={c.email}>
                           <td>{c.email}</td>
-                          <td>{c.business_name || "—"}</td>
+                          <td className="ws-admin-business-name">{c.business_name || "—"}</td>
                           <td>
                             <select
                               className="ws-admin-plan-select"

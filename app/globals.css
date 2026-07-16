@@ -2357,11 +2357,12 @@ button:focus-visible {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .ws-admin-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
@@ -2371,11 +2372,18 @@ button:focus-visible {
   text-align: left;
   padding: 0.9rem 1rem;
   border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.ws-admin-table th.ws-admin-business-name,
+.ws-admin-table td.ws-admin-business-name {
+  white-space: normal;
   overflow-wrap: break-word;
+  max-width: 11rem;
 }
 
 .ws-admin-plan-select {
-  width: 100%;
+  width: 9.5rem;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   padding: 0.5rem 0.6rem;
@@ -2386,7 +2394,7 @@ button:focus-visible {
 }
 
 .ws-admin-billing-input {
-  width: 100%;
+  width: 5.5rem;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   padding: 0.5rem 0.6rem;
