@@ -2262,11 +2262,17 @@ button:focus-visible {
 }
 
 .ws-admin-stats {
-  max-width: 46rem;
+  max-width: 60rem;
   margin: 0 auto 2.5rem;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .ws-admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .ws-admin-stat {
@@ -2280,7 +2286,7 @@ button:focus-visible {
 .ws-admin-stat-number {
   display: block;
   font-family: var(--font-display);
-  font-size: 2.25rem;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
   font-weight: 600;
   color: var(--accent);
 }
@@ -2363,6 +2369,17 @@ button:focus-visible {
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--paper);
+}
+
+.ws-admin-billing-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: inherit;
 }
 
 .ws-admin-table th {

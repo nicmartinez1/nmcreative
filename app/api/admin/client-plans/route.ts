@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
   const clients = data.map((c) => ({
     ...c,
-    business_name: businessNameByEmail.get(c.email?.toLowerCase()) || c.website || null,
+    business_name: businessNameByEmail.get(c.email?.toLowerCase()) || null,
   }));
 
   return NextResponse.json({ clients });

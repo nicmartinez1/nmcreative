@@ -14,12 +14,25 @@ const PLAN_COLORS: Record<string, string> = {
 
 const PLAN_NAMES = Object.keys(PLAN_COLORS);
 
+const WEBSITE_BUILD_PRICE = 2000;
+
 type Client = {
   email: string;
   current_plan: string;
   plan_since: string;
   business_name: string | null;
+  has_website: boolean;
+  monthly_amount: number | null;
 };
+
+type LastAction =
+  | { kind: "plan"; label: string; email: string; previousPlan: string }
+  | {
+      kind: "billing";
+      label: string;
+      email: string;
+      previousBilling: { has_website: boolean; monthly_amount: number | null };
+    };
 
 export default function Admin() {
   const [checkingSession, setCheckingSession] = useState(true);
@@ -34,12 +47,16 @@ export default function Admin() {
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
   const [changeError, setChangeError] = useState("");
-  const [lastAction, setLastAction] = useState<{
-    label: string;
-    email: string;
-    previousPlan: string | null;
-  } | null>(null);
+  const [lastAction, setLastAction] = useState<LastAction | null>(null);
   const [undoing, setUndoing] = useState(false);
+  const [billingDrafts, setBillingDrafts] = useState<Record<string, string>>({});
+  const [pendingBilling, setPendingBilling] = useState<{
+    email: string;
+    hasWebsite: boolean;
+    monthlyAmount: number | null;
+  } | null>(null);
+  const [billingSubmitting, setBillingSubmitting] = useState(false);
+  const [billingError, setBillingError] = useState("");
 
   const fetchClients = async () => {
     setLoadError("");
@@ -118,7 +135,11 @@ export default function Admin() {
     setChangingPlan(true);
     setChangeError("");
 
-    const previousPlan = clients?.find((c) => c.email === pendingChange.email)?.current_plan ?? null;
+    const previousPlan = clients?.find((c) => c.email === pendingChange.email)?.current_plan;
+    if (!previousPlan) {
+      setChangingPlan(false);
+      return;
+    }
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -136,6 +157,7 @@ export default function Admin() {
     }
 
     setLastAction({
+      kind: "plan",
       label: `Changed ${pendingChange.email} to ${pendingChange.planName}.`,
       email: pendingChange.email,
       previousPlan,
@@ -149,7 +171,11 @@ export default function Admin() {
     setChangingPlan(true);
     setChangeError("");
 
-    const previousPlan = clients?.find((c) => c.email === pendingRemoval)?.current_plan ?? null;
+    const previousPlan = clients?.find((c) => c.email === pendingRemoval)?.current_plan;
+    if (!previousPlan) {
+      setChangingPlan(false);
+      return;
+    }
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -167,6 +193,7 @@ export default function Admin() {
     }
 
     setLastAction({
+      kind: "plan",
       label: `Removed ${pendingRemoval}'s subscription.`,
       email: pendingRemoval,
       previousPlan,
@@ -175,20 +202,85 @@ export default function Admin() {
     fetchClients();
   };
 
-  const undoLastAction = async () => {
-    if (!lastAction?.previousPlan) {
-      setLastAction(null);
+  const commitMonthlyAmount = (c: Client) => {
+    const raw = billingDrafts[c.email];
+    if (raw === undefined) return;
+    const trimmed = raw.trim();
+    const parsed = trimmed === "" ? null : Number(trimmed);
+    if (trimmed !== "" && Number.isNaN(parsed)) return;
+    if (parsed === c.monthly_amount) return;
+    setPendingBilling({ email: c.email, hasWebsite: c.has_website, monthlyAmount: parsed });
+  };
+
+  const confirmBilling = async () => {
+    if (!pendingBilling) return;
+    setBillingSubmitting(true);
+    setBillingError("");
+
+    const current = clients?.find((c) => c.email === pendingBilling.email);
+    const previousBilling = {
+      has_website: current?.has_website ?? false,
+      monthly_amount: current?.monthly_amount ?? null,
+    };
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/set-billing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        email: pendingBilling.email,
+        hasWebsite: pendingBilling.hasWebsite,
+        monthlyAmount: pendingBilling.monthlyAmount,
+      }),
+    });
+    const body = await res.json();
+    setBillingSubmitting(false);
+
+    if (!res.ok) {
+      setBillingError(body.error ?? "Couldn't update billing.");
       return;
     }
+
+    setLastAction({
+      kind: "billing",
+      label: `Updated billing for ${pendingBilling.email}.`,
+      email: pendingBilling.email,
+      previousBilling,
+    });
+    setPendingBilling(null);
+    setBillingDrafts((prev) => {
+      const next = { ...prev };
+      delete next[pendingBilling.email];
+      return next;
+    });
+    fetchClients();
+  };
+
+  const undoLastAction = async () => {
+    if (!lastAction) return;
     setUndoing(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
-    await fetch("/api/admin/set-plan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email: lastAction.email, planName: lastAction.previousPlan }),
-    });
+
+    if (lastAction.kind === "plan") {
+      await fetch("/api/admin/set-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: lastAction.email, planName: lastAction.previousPlan }),
+      });
+    } else {
+      await fetch("/api/admin/set-billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          email: lastAction.email,
+          hasWebsite: lastAction.previousBilling.has_website,
+          monthlyAmount: lastAction.previousBilling.monthly_amount,
+        }),
+      });
+    }
 
     setUndoing(false);
     setLastAction(null);
@@ -201,6 +293,9 @@ export default function Admin() {
   }, {});
   const maxCount = Math.max(1, ...Object.values(planCounts));
   const totalSubscriptions = clients?.length ?? 0;
+  const totalMonthlyRevenue = (clients ?? []).reduce((sum, c) => sum + (c.monthly_amount ?? 0), 0);
+  const websitesBuilt = (clients ?? []).filter((c) => c.has_website).length;
+  const websiteRevenue = websitesBuilt * WEBSITE_BUILD_PRICE;
 
   if (checkingSession) {
     return (
@@ -286,8 +381,16 @@ export default function Admin() {
                     <span className="ws-admin-stat-label">Total subscriptions</span>
                   </div>
                   <div className="ws-admin-stat">
-                    <span className="ws-admin-stat-number">{totalSubscriptions}</span>
-                    <span className="ws-admin-stat-label">Websites created</span>
+                    <span className="ws-admin-stat-number">${totalMonthlyRevenue.toLocaleString()}</span>
+                    <span className="ws-admin-stat-label">Monthly recurring revenue</span>
+                  </div>
+                  <div className="ws-admin-stat">
+                    <span className="ws-admin-stat-number">{websitesBuilt}</span>
+                    <span className="ws-admin-stat-label">Websites built</span>
+                  </div>
+                  <div className="ws-admin-stat">
+                    <span className="ws-admin-stat-number">${websiteRevenue.toLocaleString()}</span>
+                    <span className="ws-admin-stat-label">Website build revenue</span>
                   </div>
                 </div>
 
@@ -312,20 +415,22 @@ export default function Admin() {
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">
                     <colgroup>
-                      <col style={{ width: "30%" }} />
+                      <col style={{ width: "22%" }} />
+                      <col style={{ width: "14%" }} />
                       <col style={{ width: "16%" }} />
-                      <col style={{ width: "12%" }} />
+                      <col style={{ width: "11%" }} />
+                      <col style={{ width: "9%" }} />
                       <col style={{ width: "10%" }} />
                       <col style={{ width: "18%" }} />
-                      <col style={{ width: "14%" }} />
                     </colgroup>
                     <thead>
                       <tr>
                         <th>Email</th>
                         <th>Business name</th>
-                        <th>Current plan</th>
+                        <th>Plan</th>
+                        <th>Monthly $</th>
+                        <th>Website</th>
                         <th>Since</th>
-                        <th>Change plan</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -334,8 +439,6 @@ export default function Admin() {
                         <tr key={c.email}>
                           <td>{c.email}</td>
                           <td>{c.business_name || "—"}</td>
-                          <td>{c.current_plan}</td>
-                          <td>{new Date(c.plan_since).toLocaleDateString()}</td>
                           <td>
                             <select
                               className="ws-admin-plan-select"
@@ -353,6 +456,37 @@ export default function Admin() {
                               ))}
                             </select>
                           </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              className="ws-admin-billing-input"
+                              placeholder="—"
+                              value={billingDrafts[c.email] ?? (c.monthly_amount != null ? String(c.monthly_amount) : "")}
+                              onChange={(e) =>
+                                setBillingDrafts((prev) => ({ ...prev, [c.email]: e.target.value }))
+                              }
+                              onBlur={() => commitMonthlyAmount(c)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              }}
+                            />
+                          </td>
+                          <td style={{ textAlign: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={c.has_website}
+                              onChange={(e) =>
+                                setPendingBilling({
+                                  email: c.email,
+                                  hasWebsite: e.target.checked,
+                                  monthlyAmount: c.monthly_amount,
+                                })
+                              }
+                            />
+                          </td>
+                          <td>{new Date(c.plan_since).toLocaleDateString()}</td>
                           <td>
                             <button
                               type="button"
@@ -433,14 +567,40 @@ export default function Admin() {
         </div>
       )}
 
+      {pendingBilling && (
+        <div className="ws-confirm-overlay" onClick={() => setPendingBilling(null)}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">Confirm billing update</span>
+            <h3>Update billing for {pendingBilling.email}?</h3>
+            <p>
+              Website build: {pendingBilling.hasWebsite ? `Yes ($${WEBSITE_BUILD_PRICE.toLocaleString()})` : "No"}
+              <br />
+              Monthly amount: {pendingBilling.monthlyAmount != null ? `$${pendingBilling.monthlyAmount.toLocaleString()}` : "Not set"}
+            </p>
+            {billingError && <p className="ws-portal-error">{billingError}</p>}
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={() => setPendingBilling(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="ws-btn-primary"
+                onClick={confirmBilling}
+                disabled={billingSubmitting}
+              >
+                {billingSubmitting ? "Saving…" : "Yes, update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {lastAction && (
         <div className="ws-toast ws-admin-undo-toast" role="status">
           {lastAction.label}
-          {lastAction.previousPlan && (
-            <button type="button" className="ws-btn-ghost" onClick={undoLastAction} disabled={undoing}>
-              {undoing ? "Undoing…" : "Undo"}
-            </button>
-          )}
+          <button type="button" className="ws-btn-ghost" onClick={undoLastAction} disabled={undoing}>
+            {undoing ? "Undoing…" : "Undo"}
+          </button>
         </div>
       )}
     </div>

@@ -24,11 +24,15 @@ create policy "Clients can insert their own plan changes"
 -- Table Editor (Table Editor -> plan_changes) regardless of RLS, since
 -- the dashboard uses your privileged service role.
 
--- Links each client to the actual website you built for them (set by
--- you from the admin dashboard — clients never fill this in themselves).
+-- Per-client billing details set by you from the admin dashboard only
+-- (clients never fill this in themselves): whether you built them a
+-- website (a fixed, one-time $2,000 sale, separate from their monthly
+-- service plan) and the exact monthly amount they're actually billed
+-- for their plan.
 create table public.client_profiles (
   user_id uuid primary key references auth.users (id),
-  website text,
+  has_website boolean not null default false,
+  monthly_amount numeric,
   updated_at timestamptz not null default now()
 );
 
@@ -38,15 +42,25 @@ create policy "Clients can view their own profile"
   on public.client_profiles for select
   using (auth.uid() = user_id);
 
+-- If you already ran an earlier version of this file, client_profiles
+-- exists with an old "website" text column instead. Run this instead
+-- of the "create table" above to migrate it:
+-- alter table public.client_profiles
+--   add column if not exists has_website boolean not null default false,
+--   add column if not exists monthly_amount numeric;
+-- alter table public.client_profiles drop column if exists website;
+
 -- Admin view: one row per client showing their CURRENT plan (the most
--- recent entry in plan_changes), their website, and their email. Query
--- this anytime from the SQL Editor to see who's on what plan.
+-- recent entry in plan_changes), their billing details, and their
+-- email. Query this anytime from the SQL Editor to see who's on what
+-- plan and what they're actually paying.
 create or replace view public.client_current_plans as
 select distinct on (pc.user_id)
   u.email,
   pc.plan_name as current_plan,
   pc.changed_at as plan_since,
-  cp.website
+  coalesce(cp.has_website, false) as has_website,
+  cp.monthly_amount
 from public.plan_changes pc
 join auth.users u on u.id = pc.user_id
 left join public.client_profiles cp on cp.user_id = pc.user_id
