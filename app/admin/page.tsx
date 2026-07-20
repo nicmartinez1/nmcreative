@@ -34,10 +34,11 @@ type Client = {
 };
 
 type PlanRequest = {
+  id: number;
   email: string;
   business_name: string | null;
   plan_name: string;
-  changed_at: string;
+  requested_at: string;
 };
 
 type LastAction =
@@ -74,6 +75,14 @@ export default function Admin() {
   const [billingSubmitting, setBillingSubmitting] = useState(false);
   const [billingError, setBillingError] = useState("");
   const [planRequest, setPlanRequest] = useState<PlanRequest | null>(null);
+  const [pendingResolution, setPendingResolution] = useState<{
+    id: number;
+    decision: "approve" | "deny";
+    email: string;
+    planName: string;
+  } | null>(null);
+  const [resolveSubmitting, setResolveSubmitting] = useState(false);
+  const [resolveError, setResolveError] = useState("");
 
   const fetchClients = async () => {
     setLoadError("");
@@ -330,6 +339,30 @@ export default function Admin() {
     refreshData();
   };
 
+  const resolvePlanRequest = async () => {
+    if (!pendingResolution) return;
+    setResolveSubmitting(true);
+    setResolveError("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/resolve-plan-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ requestId: pendingResolution.id, decision: pendingResolution.decision }),
+    });
+    const body = await res.json();
+    setResolveSubmitting(false);
+
+    if (!res.ok) {
+      setResolveError(body.error ?? "Couldn't resolve that request.");
+      return;
+    }
+
+    setPendingResolution(null);
+    refreshData();
+  };
+
   const planCounts = (clients ?? []).reduce<Record<string, number>>((acc, c) => {
     acc[c.current_plan] = (acc[c.current_plan] ?? 0) + 1;
     return acc;
@@ -457,7 +490,7 @@ export default function Admin() {
 
                 {planRequest && (
                   <div className="ws-admin-activity">
-                    <span className="ws-admin-activity-title">Latest plan request</span>
+                    <span className="ws-admin-activity-title">Pending plan request</span>
                     <div className="ws-admin-activity-row">
                       <span className="ws-admin-activity-who">
                         {planRequest.business_name
@@ -467,7 +500,37 @@ export default function Admin() {
                       <span className="ws-admin-activity-what">
                         wants to switch to <strong>{planRequest.plan_name}</strong>
                       </span>
-                      <span className="ws-admin-activity-when">{formatDate(planRequest.changed_at)}</span>
+                      <span className="ws-admin-activity-when">{formatDate(planRequest.requested_at)}</span>
+                    </div>
+                    <div className="ws-admin-activity-actions">
+                      <button
+                        type="button"
+                        className="ws-btn-ghost"
+                        onClick={() =>
+                          setPendingResolution({
+                            id: planRequest.id,
+                            decision: "deny",
+                            email: planRequest.email,
+                            planName: planRequest.plan_name,
+                          })
+                        }
+                      >
+                        Deny
+                      </button>
+                      <button
+                        type="button"
+                        className="ws-btn-primary"
+                        onClick={() =>
+                          setPendingResolution({
+                            id: planRequest.id,
+                            decision: "approve",
+                            email: planRequest.email,
+                            planName: planRequest.plan_name,
+                          })
+                        }
+                      >
+                        Approve
+                      </button>
                     </div>
                   </div>
                 )}
@@ -678,6 +741,39 @@ export default function Admin() {
                 disabled={billingSubmitting}
               >
                 {billingSubmitting ? "Saving…" : "Yes, update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingResolution && (
+        <div className="ws-confirm-overlay" onClick={() => setPendingResolution(null)}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">
+              Confirm {pendingResolution.decision === "approve" ? "approval" : "denial"}
+            </span>
+            <h3>
+              {pendingResolution.decision === "approve" ? "Approve" : "Deny"} {pendingResolution.email}&rsquo;s
+              request to switch to {pendingResolution.planName}?
+            </h3>
+            <p>
+              {pendingResolution.decision === "approve"
+                ? "This applies the plan change immediately and emails them to confirm."
+                : "This clears the request — they can submit a new one once they're outside their cooldown."}
+            </p>
+            {resolveError && <p className="ws-portal-error">{resolveError}</p>}
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={() => setPendingResolution(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="ws-btn-primary"
+                onClick={resolvePlanRequest}
+                disabled={resolveSubmitting}
+              >
+                {resolveSubmitting ? "Saving…" : `Yes, ${pendingResolution.decision}`}
               </button>
             </div>
           </div>

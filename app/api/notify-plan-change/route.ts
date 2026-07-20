@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     const businessName = user.user_metadata?.business_name;
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `Plan change: ${businessName ? `${businessName} (${user.email})` : user.email} switched to ${planName}`,
-      html: `<p><strong>${escapeHtml(businessName ? `${businessName} — ${user.email}` : user.email)}</strong> just switched to <strong>${escapeHtml(planName)}</strong>.</p><p>Check the <a href="https://webskillet.net/admin">admin dashboard</a> for full billing details.</p>`,
+      subject: `Plan request: ${businessName ? `${businessName} (${user.email})` : user.email} wants ${planName}`,
+      html: `<p><strong>${escapeHtml(businessName ? `${businessName} — ${user.email}` : user.email)}</strong> requested a switch to <strong>${escapeHtml(planName)}</strong>.</p><p>Approve or deny it from the <a href="https://webskillet.net/admin">admin dashboard</a>.</p>`,
     });
   }
 

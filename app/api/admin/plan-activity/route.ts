@@ -15,9 +15,10 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from("plan_changes")
-    .select("user_id, plan_name, changed_at")
-    .order("changed_at", { ascending: false })
+    .from("plan_requests")
+    .select("id, user_id, plan_name, requested_at")
+    .eq("status", "pending")
+    .order("requested_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -39,10 +40,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     request: {
+      id: data.id,
       email: user?.email ?? "Unknown",
       business_name: user?.user_metadata?.business_name ?? null,
       plan_name: data.plan_name,
-      changed_at: data.changed_at,
+      requested_at: data.requested_at,
     },
   });
 }

@@ -38,7 +38,7 @@ function Toast({ planName, onDismiss }: { planName: string; onDismiss: () => voi
 
   return (
     <div className="ws-toast" role="status">
-      ✓ You&rsquo;ve switched to <strong>{planName}</strong>.
+      ✓ Requested a switch to <strong>{planName}</strong> — awaiting approval.
     </div>
   );
 }
@@ -96,6 +96,7 @@ export default function ClientAccess() {
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
   const [lastChangedAt, setLastChangedAt] = useState<string | null>(null);
   const [hasWebsite, setHasWebsite] = useState(false);
+  const [pendingRequestPlan, setPendingRequestPlan] = useState<string | null>(null);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -127,13 +128,23 @@ export default function ClientAccess() {
       .eq("user_id", uid)
       .maybeSingle();
     setHasWebsite(profile?.has_website ?? false);
+
+    const { data: existingRequest } = await supabase
+      .from("plan_requests")
+      .select("plan_name")
+      .eq("user_id", uid)
+      .eq("status", "pending")
+      .order("requested_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setPendingRequestPlan(existingRequest?.plan_name ?? null);
   };
 
   const PLAN_COOLDOWN_DAYS = 30;
   const nextSwitchDate = lastChangedAt
     ? new Date(new Date(lastChangedAt).getTime() + PLAN_COOLDOWN_DAYS * 24 * 60 * 60 * 1000)
     : null;
-  const isLocked = !!nextSwitchDate && nextSwitchDate.getTime() > Date.now();
+  const isLocked = (!!nextSwitchDate && nextSwitchDate.getTime() > Date.now()) || !!pendingRequestPlan;
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -260,26 +271,16 @@ export default function ClientAccess() {
     const planName = pendingPlan;
     setPendingPlan(null);
 
-    const previousPlan = currentPlan;
-    const previousChangedAt = lastChangedAt;
-    const now = new Date().toISOString();
-
-    // Update the UI right away so it always feels instant; roll back if
-    // the write is rejected (e.g. still inside the cooldown window).
-    setCurrentPlan(planName);
-    setLastChangedAt(now);
-    setSwitchConfirmation(planName);
-
     const { error: insertError } = await supabase
-      .from("plan_changes")
-      .insert({ user_id: userId, plan_name: planName, changed_at: now });
+      .from("plan_requests")
+      .insert({ user_id: userId, plan_name: planName });
     if (insertError) {
-      setCurrentPlan(previousPlan);
-      setLastChangedAt(previousChangedAt);
-      setSwitchConfirmation("");
       window.alert(insertError.message);
       return;
     }
+
+    setPendingRequestPlan(planName);
+    setSwitchConfirmation(planName);
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -289,7 +290,7 @@ export default function ClientAccess() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ planName }),
       }).catch(() => {
-        // Best-effort — a failed notification shouldn't block the switch itself.
+        // Best-effort — a failed notification shouldn't block the request itself.
       });
     }
   };
@@ -592,13 +593,15 @@ export default function ClientAccess() {
               <h2>Manage your plan.</h2>
               <p>
                 You&rsquo;re currently on <strong>{currentPlan}</strong>.{" "}
-                {isLocked && nextSwitchDate
-                  ? `You can switch plans again on ${nextSwitchDate.toLocaleDateString(undefined, {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}.`
-                  : "Switch any time — changes take effect on your next billing cycle."}
+                {pendingRequestPlan
+                  ? `Your request to switch to ${pendingRequestPlan} is awaiting approval.`
+                  : isLocked && nextSwitchDate
+                    ? `You can request another switch on ${nextSwitchDate.toLocaleDateString(undefined, {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}.`
+                    : "Request a switch any time — it takes effect once approved."}
               </p>
             </Reveal>
             <div className="ws-plan-grid">
@@ -629,6 +632,10 @@ export default function ClientAccess() {
                       <button type="button" className="ws-btn-ghost" disabled>
                         Your current plan
                       </button>
+                    ) : pendingRequestPlan === plan.name ? (
+                      <button type="button" className="ws-btn-ghost" disabled>
+                        Request pending approval
+                      </button>
                     ) : isLocked ? (
                       <Link href="/contact" className="ws-btn-ghost">
                         Contact to change plan
@@ -639,7 +646,7 @@ export default function ClientAccess() {
                         className="ws-btn-primary"
                         onClick={() => requestSwitchPlan(plan.name)}
                       >
-                        Switch to this plan
+                        Request this plan
                       </button>
                     )}
                   </Reveal>
@@ -674,15 +681,19 @@ export default function ClientAccess() {
       {pendingPlan && (
         <div className="ws-confirm-overlay" onClick={cancelSwitchPlan}>
           <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <span className="ws-eyebrow">Confirm switch</span>
-            <h3>Switch to {pendingPlan}?</h3>
-            <p>This will be reflected in your next billing cycle.</p>
+            <span className="ws-eyebrow">Confirm request</span>
+            <h3>Request a switch to {pendingPlan}?</h3>
+            <p>
+              This sends a request to your account manager for approval — it won&rsquo;t take effect until
+              they approve it, and you won&rsquo;t be able to submit another request until this one is
+              resolved or 30 days pass.
+            </p>
             <div className="ws-confirm-actions">
               <button type="button" className="ws-btn-ghost" onClick={cancelSwitchPlan}>
                 Cancel
               </button>
               <button type="button" className="ws-btn-primary" onClick={confirmSwitchPlan}>
-                Yes, switch plan
+                Yes, send request
               </button>
             </div>
           </div>

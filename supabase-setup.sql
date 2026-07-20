@@ -124,6 +124,74 @@ create trigger plan_change_cooldown
   before insert on public.plan_changes
   for each row execute function public.enforce_plan_change_cooldown();
 
+-- Plan CHANGE REQUESTS: a client asking to switch plans no longer takes
+-- effect immediately. It lands here as a pending request; nothing in
+-- plan_changes (and therefore nothing on their bill) changes until you
+-- approve it from the admin dashboard, which is what actually inserts
+-- the row into plan_changes.
+create table public.plan_requests (
+  id bigint generated always as identity primary key,
+  user_id uuid references auth.users (id) not null,
+  plan_name text not null,
+  requested_at timestamptz not null default now(),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'denied')),
+  resolved_at timestamptz
+);
+
+alter table public.plan_requests enable row level security;
+
+create policy "Clients can view their own plan requests"
+  on public.plan_requests for select
+  using (auth.uid() = user_id);
+
+create policy "Clients can insert their own plan requests"
+  on public.plan_requests for insert
+  with check (auth.uid() = user_id);
+
+-- Same 30-day cooldown as before, but now checked at REQUEST time
+-- against the last REAL change (plan_changes), plus a check that
+-- there isn't already a pending request sitting unresolved. Skipped
+-- for the SQL Editor / admin API (service_role) — i.e. you approving a
+-- request bypasses the cooldown by design ("unless it gets approved").
+create or replace function public.enforce_plan_request_cooldown()
+returns trigger as $$
+declare
+  last_change timestamptz;
+  already_pending boolean;
+begin
+  if current_user in ('postgres', 'service_role') then
+    return new;
+  end if;
+
+  select changed_at into last_change
+  from public.plan_changes
+  where user_id = new.user_id
+  order by changed_at desc
+  limit 1;
+
+  if last_change is not null and new.requested_at < last_change + interval '30 days' then
+    raise exception 'Plan changes are limited to once every 30 days. Next request available %',
+      to_char(last_change + interval '30 days', 'YYYY-MM-DD');
+  end if;
+
+  select exists(
+    select 1 from public.plan_requests
+    where user_id = new.user_id and status = 'pending'
+  ) into already_pending;
+
+  if already_pending then
+    raise exception 'You already have a pending plan request.';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists plan_request_cooldown on public.plan_requests;
+create trigger plan_request_cooldown
+  before insert on public.plan_requests
+  for each row execute function public.enforce_plan_request_cooldown();
+
 -- ---------------------------------------------------------------------
 -- Admin operations (run these from the SQL Editor whenever needed)
 -- ---------------------------------------------------------------------
