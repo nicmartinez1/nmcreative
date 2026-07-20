@@ -224,6 +224,14 @@ export default function ClientAccess() {
       return;
     }
 
+    fetch("/api/notify-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }).catch(() => {
+      // Best-effort — a failed welcome email shouldn't block signup.
+    });
+
     // If email confirmation is off, Supabase returns a session immediately
     // and onAuthStateChange picks it up; otherwise, prompt to check inbox.
     if (!data.session) {
