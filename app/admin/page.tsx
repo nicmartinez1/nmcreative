@@ -33,7 +33,7 @@ type Client = {
   monthly_amount: number | null;
 };
 
-type ActivityItem = {
+type PlanRequest = {
   email: string;
   business_name: string | null;
   plan_name: string;
@@ -73,7 +73,7 @@ export default function Admin() {
   } | null>(null);
   const [billingSubmitting, setBillingSubmitting] = useState(false);
   const [billingError, setBillingError] = useState("");
-  const [activity, setActivity] = useState<ActivityItem[] | null>(null);
+  const [planRequest, setPlanRequest] = useState<PlanRequest | null>(null);
 
   const fetchClients = async () => {
     setLoadError("");
@@ -94,7 +94,7 @@ export default function Admin() {
     setClients(body.clients);
   };
 
-  const fetchActivity = async () => {
+  const fetchPlanRequest = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
     if (!token) return;
@@ -103,12 +103,12 @@ export default function Admin() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const body = await res.json();
-    if (res.ok) setActivity(body.activity);
+    if (res.ok) setPlanRequest(body.request);
   };
 
   const refreshData = () => {
     fetchClients();
-    fetchActivity();
+    fetchPlanRequest();
   };
 
   useEffect(() => {
@@ -455,22 +455,20 @@ export default function Admin() {
                   ))}
                 </div>
 
-                {activity && activity.length > 0 && (
+                {planRequest && (
                   <div className="ws-admin-activity">
-                    <span className="ws-admin-activity-title">Recent plan activity</span>
-                    <ul className="ws-admin-activity-list">
-                      {activity.map((a, i) => (
-                        <li key={`${a.email}-${a.changed_at}-${i}`}>
-                          <span className="ws-admin-activity-who">
-                            {a.business_name ? `${a.business_name} · ${a.email}` : a.email}
-                          </span>
-                          <span className="ws-admin-activity-what">
-                            switched to <strong>{a.plan_name}</strong>
-                          </span>
-                          <span className="ws-admin-activity-when">{formatDate(a.changed_at)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <span className="ws-admin-activity-title">Latest plan request</span>
+                    <div className="ws-admin-activity-row">
+                      <span className="ws-admin-activity-who">
+                        {planRequest.business_name
+                          ? `${planRequest.business_name} · ${planRequest.email}`
+                          : planRequest.email}
+                      </span>
+                      <span className="ws-admin-activity-what">
+                        wants to switch to <strong>{planRequest.plan_name}</strong>
+                      </span>
+                      <span className="ws-admin-activity-when">{formatDate(planRequest.changed_at)}</span>
+                    </div>
                   </div>
                 )}
 

@@ -18,10 +18,15 @@ export async function GET(request: Request) {
     .from("plan_changes")
     .select("user_id, plan_name, changed_at")
     .order("changed_at", { ascending: false })
-    .limit(20);
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data) {
+    return NextResponse.json({ request: null });
   }
 
   const { data: userList, error: userListError } = await supabaseAdmin.auth.admin.listUsers({
@@ -30,22 +35,14 @@ export async function GET(request: Request) {
   if (userListError) {
     return NextResponse.json({ error: userListError.message }, { status: 500 });
   }
-  const usersById = new Map<string, { email?: string; business_name?: string }>(
-    userList.users.map((u): [string, { email?: string; business_name?: string }] => [
-      u.id,
-      { email: u.email, business_name: u.user_metadata?.business_name },
-    ])
-  );
+  const user = userList.users.find((u) => u.id === data.user_id);
 
-  const activity = data.map((row) => {
-    const user = usersById.get(row.user_id);
-    return {
+  return NextResponse.json({
+    request: {
       email: user?.email ?? "Unknown",
-      business_name: user?.business_name ?? null,
-      plan_name: row.plan_name,
-      changed_at: row.changed_at,
-    };
+      business_name: user?.user_metadata?.business_name ?? null,
+      plan_name: data.plan_name,
+      changed_at: data.changed_at,
+    },
   });
-
-  return NextResponse.json({ activity });
 }
