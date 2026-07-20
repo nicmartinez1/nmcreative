@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   // Best-effort — the durable ongoing record lives in the Sheet, but a
   // failure here shouldn't block the inquiry from landing in the inbox.
-  await appendContactRow([
+  const sheetResult = await appendContactRow([
     new Date().toISOString(),
     businessName,
     phone,
@@ -38,6 +38,9 @@ export async function POST(request: Request) {
     servicesList.join(", "),
     message || "",
   ]);
+  if (!sheetResult.ok) {
+    console.error("Google Sheets append failed:", sheetResult.error);
+  }
 
   return NextResponse.json({ success: true });
 }
