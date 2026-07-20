@@ -41,6 +41,19 @@ type PlanRequest = {
   requested_at: string;
 };
 
+type ContactMessage = {
+  id: number;
+  business_name: string;
+  phone: string;
+  email: string;
+  address: string | null;
+  is_startup: boolean;
+  services: string[];
+  message: string | null;
+  created_at: string;
+  read: boolean;
+};
+
 type LastAction =
   | { kind: "plan"; label: string; email: string; previousPlan: string }
   | {
@@ -83,6 +96,10 @@ export default function Admin() {
   } | null>(null);
   const [resolveSubmitting, setResolveSubmitting] = useState(false);
   const [resolveError, setResolveError] = useState("");
+  const [messages, setMessages] = useState<ContactMessage[] | null>(null);
+  const [pendingMessageDeletion, setPendingMessageDeletion] = useState<number | null>(null);
+  const [pendingClearRead, setPendingClearRead] = useState(false);
+  const [messageActionError, setMessageActionError] = useState("");
 
   const fetchClients = async () => {
     setLoadError("");
@@ -115,9 +132,104 @@ export default function Admin() {
     if (res.ok) setPlanRequest(body.request);
   };
 
+  const fetchMessages = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+
+    const res = await fetch("/api/admin/messages", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (res.ok) setMessages(body.messages);
+  };
+
   const refreshData = () => {
     fetchClients();
     fetchPlanRequest();
+    fetchMessages();
+  };
+
+  const toggleMessageRead = async (m: ContactMessage) => {
+    setMessageActionError("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/messages/mark-read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: m.id, read: !m.read }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setMessageActionError(body.error ?? "Couldn't update that message.");
+      return;
+    }
+    fetchMessages();
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (pendingMessageDeletion === null) return;
+    setMessageActionError("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/messages/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: pendingMessageDeletion }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setMessageActionError(body.error ?? "Couldn't delete that message.");
+      return;
+    }
+    setPendingMessageDeletion(null);
+    fetchMessages();
+  };
+
+  const confirmClearRead = async () => {
+    setMessageActionError("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/admin/messages/clear-read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setMessageActionError(body.error ?? "Couldn't clear those messages.");
+      return;
+    }
+    setPendingClearRead(false);
+    fetchMessages();
+  };
+
+  const csvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+  const exportMessagesCsv = () => {
+    if (!messages || messages.length === 0) return;
+    const header = ["Business name", "Email", "Phone", "Address", "New/startup", "Interested in", "Message", "Received", "Read"];
+    const rows = messages.map((m) => [
+      m.business_name,
+      m.email,
+      m.phone,
+      m.is_startup ? "New/startup business" : m.address || "",
+      m.is_startup ? "Yes" : "No",
+      m.services.join("; "),
+      m.message || "",
+      formatDate(m.created_at),
+      m.read ? "Yes" : "No",
+    ]);
+    const csv = [header, ...rows].map((row) => row.map((cell) => csvField(String(cell))).join(",")).join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `webskillet-messages-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -649,6 +761,69 @@ export default function Admin() {
               </>
             )}
           </section>
+
+          <section className="ws-section" style={{ paddingTop: 0 }}>
+            <div className="ws-admin-messages">
+              <div className="ws-admin-messages-header">
+                <span className="ws-admin-activity-title">
+                  Messages{" "}
+                  {messages && messages.some((m) => !m.read) && (
+                    <span className="ws-admin-messages-badge">
+                      {messages.filter((m) => !m.read).length} new
+                    </span>
+                  )}
+                </span>
+                {messages && messages.length > 0 && (
+                  <div className="ws-admin-messages-header-actions">
+                    <button type="button" className="ws-btn-ghost" onClick={exportMessagesCsv}>
+                      Export as CSV
+                    </button>
+                    {messages.some((m) => m.read) && (
+                      <button type="button" className="ws-btn-ghost" onClick={() => setPendingClearRead(true)}>
+                        Clear read messages
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {messageActionError && <p className="ws-portal-error">{messageActionError}</p>}
+              {messages === null ? (
+                <p className="ws-admin-messages-empty">Loading…</p>
+              ) : messages.length === 0 ? (
+                <p className="ws-admin-messages-empty">No inquiries yet.</p>
+              ) : (
+                <ul className="ws-admin-messages-list">
+                  {messages.map((m) => (
+                    <li key={m.id} className={m.read ? "" : "is-unread"}>
+                      <div className="ws-admin-message-head">
+                        <span className="ws-admin-message-from">
+                          {m.business_name} · <a href={`mailto:${m.email}`}>{m.email}</a> · {m.phone}
+                        </span>
+                        <span className="ws-admin-message-when">{formatDate(m.created_at)}</span>
+                      </div>
+                      <p className="ws-admin-message-meta">
+                        {m.is_startup ? "New/startup business" : m.address || "No address given"}
+                        {m.services.length > 0 ? ` · Interested in: ${m.services.join(", ")}` : ""}
+                      </p>
+                      {m.message && <p className="ws-admin-message-body">{m.message}</p>}
+                      <div className="ws-admin-message-actions">
+                        <button type="button" className="ws-btn-ghost" onClick={() => toggleMessageRead(m)}>
+                          {m.read ? "Mark unread" : "Mark read"}
+                        </button>
+                        <button
+                          type="button"
+                          className="ws-btn-ghost"
+                          onClick={() => setPendingMessageDeletion(m.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
         </>
       )}
 
@@ -774,6 +949,47 @@ export default function Admin() {
                 disabled={resolveSubmitting}
               >
                 {resolveSubmitting ? "Saving…" : `Yes, ${pendingResolution.decision}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingMessageDeletion !== null && (
+        <div className="ws-confirm-overlay" onClick={() => setPendingMessageDeletion(null)}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">Confirm delete</span>
+            <h3>Delete this message?</h3>
+            <p>This can&rsquo;t be undone.</p>
+            {messageActionError && <p className="ws-portal-error">{messageActionError}</p>}
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={() => setPendingMessageDeletion(null)}>
+                Cancel
+              </button>
+              <button type="button" className="ws-btn-primary" onClick={confirmDeleteMessage}>
+                Yes, delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingClearRead && (
+        <div className="ws-confirm-overlay" onClick={() => setPendingClearRead(false)}>
+          <div className="ws-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <span className="ws-eyebrow">Confirm clear</span>
+            <h3>Delete all read messages?</h3>
+            <p>
+              Export them first if you want to keep a record — this deletes every message marked read and
+              can&rsquo;t be undone.
+            </p>
+            {messageActionError && <p className="ws-portal-error">{messageActionError}</p>}
+            <div className="ws-confirm-actions">
+              <button type="button" className="ws-btn-ghost" onClick={() => setPendingClearRead(false)}>
+                Cancel
+              </button>
+              <button type="button" className="ws-btn-primary" onClick={confirmClearRead}>
+                Yes, clear
               </button>
             </div>
           </div>

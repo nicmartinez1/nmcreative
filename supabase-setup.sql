@@ -192,6 +192,26 @@ create trigger plan_request_cooldown
   before insert on public.plan_requests
   for each row execute function public.enforce_plan_request_cooldown();
 
+-- Contact form inquiries land here instead of going straight to email —
+-- the admin dashboard reads this table directly. Locked down entirely
+-- (no anon/authenticated access); the /api/contact and /api/admin/*
+-- routes both write/read using the service_role key.
+create table public.contact_messages (
+  id bigint generated always as identity primary key,
+  business_name text not null,
+  phone text not null,
+  email text not null,
+  address text,
+  is_startup boolean not null default false,
+  services text[],
+  message text,
+  created_at timestamptz not null default now(),
+  read boolean not null default false
+);
+
+alter table public.contact_messages enable row level security;
+revoke all on public.contact_messages from anon, authenticated;
+
 -- ---------------------------------------------------------------------
 -- Admin operations (run these from the SQL Editor whenever needed)
 -- ---------------------------------------------------------------------
