@@ -14,9 +14,9 @@ export const supabaseAdmin = createClient(
   serviceRoleKey || "placeholder-service-role-key"
 );
 
-// Verifies the request's bearer token belongs to a logged-in user whose
-// email matches ADMIN_EMAIL. Returns that user, or null if unauthorized.
-export async function verifyAdmin(request: Request) {
+// Verifies the request's bearer token belongs to a logged-in user. Returns
+// that user, or null if the token is missing or invalid.
+export async function verifyUser(request: Request) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
   if (!token) return null;
@@ -28,10 +28,19 @@ export async function verifyAdmin(request: Request) {
   const { data: userData, error: userError } = await anonClient.auth.getUser(token);
   if (userError || !userData.user) return null;
 
-  const adminEmail = process.env.ADMIN_EMAIL!.toLowerCase();
-  if (userData.user.email?.toLowerCase() !== adminEmail) return null;
-
   return userData.user;
+}
+
+// Verifies the request's bearer token belongs to a logged-in user whose
+// email matches ADMIN_EMAIL. Returns that user, or null if unauthorized.
+export async function verifyAdmin(request: Request) {
+  const user = await verifyUser(request);
+  if (!user) return null;
+
+  const adminEmail = process.env.ADMIN_EMAIL!.toLowerCase();
+  if (user.email?.toLowerCase() !== adminEmail) return null;
+
+  return user;
 }
 
 // Looks up an auth user by email using the admin API (auth.users isn't

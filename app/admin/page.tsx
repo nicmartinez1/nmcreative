@@ -33,6 +33,13 @@ type Client = {
   monthly_amount: number | null;
 };
 
+type ActivityItem = {
+  email: string;
+  business_name: string | null;
+  plan_name: string;
+  changed_at: string;
+};
+
 type LastAction =
   | { kind: "plan"; label: string; email: string; previousPlan: string }
   | {
@@ -66,6 +73,7 @@ export default function Admin() {
   } | null>(null);
   const [billingSubmitting, setBillingSubmitting] = useState(false);
   const [billingError, setBillingError] = useState("");
+  const [activity, setActivity] = useState<ActivityItem[] | null>(null);
 
   const fetchClients = async () => {
     setLoadError("");
@@ -86,6 +94,23 @@ export default function Admin() {
     setClients(body.clients);
   };
 
+  const fetchActivity = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+
+    const res = await fetch("/api/admin/plan-activity", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (res.ok) setActivity(body.activity);
+  };
+
+  const refreshData = () => {
+    fetchClients();
+    fetchActivity();
+  };
+
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setCheckingSession(false);
@@ -96,14 +121,14 @@ export default function Admin() {
       .getSession()
       .then(({ data }) => {
         setLoggedIn(!!data.session);
-        if (data.session) fetchClients();
+        if (data.session) refreshData();
       })
       .catch(() => {})
       .finally(() => setCheckingSession(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setLoggedIn(!!session);
-      if (session) fetchClients();
+      if (session) refreshData();
     });
 
     return () => listener.subscription.unsubscribe();
@@ -172,7 +197,7 @@ export default function Admin() {
       previousPlan,
     });
     setPendingChange(null);
-    fetchClients();
+    refreshData();
   };
 
   const confirmRemovePlan = async () => {
@@ -208,7 +233,7 @@ export default function Admin() {
       previousPlan,
     });
     setPendingRemoval(null);
-    fetchClients();
+    refreshData();
   };
 
   const commitMonthlyAmount = (c: Client) => {
@@ -271,7 +296,7 @@ export default function Admin() {
       delete next[pendingBilling.email];
       return next;
     });
-    fetchClients();
+    refreshData();
   };
 
   const undoLastAction = async () => {
@@ -302,7 +327,7 @@ export default function Admin() {
 
     setUndoing(false);
     setLastAction(null);
-    fetchClients();
+    refreshData();
   };
 
   const planCounts = (clients ?? []).reduce<Record<string, number>>((acc, c) => {
@@ -429,6 +454,25 @@ export default function Admin() {
                     </div>
                   ))}
                 </div>
+
+                {activity && activity.length > 0 && (
+                  <div className="ws-admin-activity">
+                    <span className="ws-admin-activity-title">Recent plan activity</span>
+                    <ul className="ws-admin-activity-list">
+                      {activity.map((a, i) => (
+                        <li key={`${a.email}-${a.changed_at}-${i}`}>
+                          <span className="ws-admin-activity-who">
+                            {a.business_name ? `${a.business_name} · ${a.email}` : a.email}
+                          </span>
+                          <span className="ws-admin-activity-what">
+                            switched to <strong>{a.plan_name}</strong>
+                          </span>
+                          <span className="ws-admin-activity-when">{formatDate(a.changed_at)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <div className="ws-admin-table-wrap">
                   <table className="ws-admin-table">

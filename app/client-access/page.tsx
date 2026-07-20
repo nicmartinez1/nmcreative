@@ -278,6 +278,19 @@ export default function ClientAccess() {
       setLastChangedAt(previousChangedAt);
       setSwitchConfirmation("");
       window.alert(insertError.message);
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (token) {
+      fetch("/api/notify-plan-change", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ planName }),
+      }).catch(() => {
+        // Best-effort — a failed notification shouldn't block the switch itself.
+      });
     }
   };
 

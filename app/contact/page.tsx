@@ -60,13 +60,42 @@ export default function Contact() {
   const [isStartup, setIsStartup] = useState(false);
   const [services, setServices] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const toggleService = (s: string) => {
     setServices((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    setSubmitting(true);
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName: formData.get("businessName"),
+        phone: formData.get("phone"),
+        email: formData.get("email"),
+        address: formData.get("address"),
+        isStartup,
+        services,
+        message: formData.get("message"),
+      }),
+    });
+    setSubmitting(false);
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? "Something went wrong — try again in a moment.");
+      return;
+    }
+
     setSubmitted(true);
   };
 
@@ -91,11 +120,7 @@ export default function Contact() {
             <div className="ws-form-success">
               <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>Got it</span>
               <h3>Thanks, that&rsquo;s in.</h3>
-              <p>
-                This form isn&rsquo;t wired up to a real inbox yet, so nothing
-                was actually sent. Once a contact address is set up, this same
-                form will go straight there.
-              </p>
+              <p>We got your message and will reply soon with a plan and a rough price.</p>
             </div>
           ) : (
             <form className="ws-form" onSubmit={handleSubmit}>
@@ -161,8 +186,9 @@ export default function Contact() {
                 />
               </label>
 
-              <button type="submit" className="ws-btn-primary">
-                Request pricing
+              {error && <p className="ws-portal-error">{error}</p>}
+              <button type="submit" className="ws-btn-primary" disabled={submitting}>
+                {submitting ? "Sending…" : "Request pricing"}
               </button>
             </form>
           )}

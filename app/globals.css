@@ -2351,6 +2351,64 @@ button:focus-visible {
   color: rgba(21, 14, 40, 0.6);
 }
 
+.ws-admin-activity {
+  max-width: 46rem;
+  margin: 0 auto 3rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+}
+
+.ws-admin-activity-title {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(21, 14, 40, 0.5);
+  margin-bottom: 0.9rem;
+}
+
+.ws-admin-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ws-admin-activity-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.6rem;
+  font-size: 0.88rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.ws-admin-activity-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.ws-admin-activity-who {
+  font-weight: 600;
+}
+
+.ws-admin-activity-what {
+  color: rgba(21, 14, 40, 0.68);
+}
+
+.ws-admin-activity-when {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: rgba(21, 14, 40, 0.5);
+}
+
 .ws-admin-table-wrap {
   max-width: 68rem;
   margin: 0 auto;
