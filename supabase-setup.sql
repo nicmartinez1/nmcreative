@@ -29,11 +29,19 @@ create policy "Clients can insert their own plan changes"
 -- website (a fixed, one-time $2,000 sale, separate from their monthly
 -- service plan), whether they're currently on a monthly subscription
 -- at all, and — only if so — the exact monthly amount they're billed.
+-- website_completed_at, checkin_email_sent_at, and feedback_email_sent_at
+-- back the scheduled lifecycle emails (see the /api/cron/lifecycle-emails
+-- route): a one-time feedback request 14 days after the website goes
+-- live, and a recurring "how's it going / want to upgrade" check-in 30
+-- days after the current plan started, each sent at most once per cycle.
 create table public.client_profiles (
   user_id uuid primary key references auth.users (id),
   has_website boolean not null default false,
   has_subscription boolean not null default false,
   monthly_amount numeric,
+  website_completed_at timestamptz,
+  checkin_email_sent_at timestamptz,
+  feedback_email_sent_at timestamptz,
   updated_at timestamptz not null default now()
 );
 
@@ -59,6 +67,18 @@ create policy "Clients can view their own profile"
 -- -- Anyone with a monthly_amount already set was implicitly a
 -- -- subscriber under the old shape — carry that forward:
 -- update public.client_profiles set has_subscription = true where monthly_amount is not null;
+-- -- Lifecycle-email tracking columns (safe to run even if the table
+-- -- already has has_website/has_subscription/monthly_amount):
+-- alter table public.client_profiles
+--   add column if not exists website_completed_at timestamptz,
+--   add column if not exists checkin_email_sent_at timestamptz,
+--   add column if not exists feedback_email_sent_at timestamptz;
+-- -- Anyone already marked has_website = true had their website
+-- -- completed at some unknown past point — backdate it far enough
+-- -- that the one-time feedback email fires on the very next cron run:
+-- update public.client_profiles
+-- set website_completed_at = now() - interval '15 days'
+-- where has_website = true and website_completed_at is null;
 
 -- Admin view: one row per client showing their CURRENT plan (the most
 -- recent entry in plan_changes), their billing details, and their
@@ -72,12 +92,16 @@ create policy "Clients can view their own profile"
 drop view if exists public.client_current_plans;
 create view public.client_current_plans as
 select distinct on (pc.user_id)
+  pc.user_id,
   u.email,
   pc.plan_name as current_plan,
   pc.changed_at as plan_since,
   coalesce(cp.has_website, false) as has_website,
   coalesce(cp.has_subscription, false) as has_subscription,
-  cp.monthly_amount
+  cp.monthly_amount,
+  cp.website_completed_at,
+  cp.checkin_email_sent_at,
+  cp.feedback_email_sent_at
 from public.plan_changes pc
 join auth.users u on u.id = pc.user_id
 left join public.client_profiles cp on cp.user_id = pc.user_id

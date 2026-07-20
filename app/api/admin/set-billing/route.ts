@@ -27,10 +27,13 @@ export async function POST(request: Request) {
 
   const { data: existingProfile } = await supabaseAdmin
     .from("client_profiles")
-    .select("has_website")
+    .select("has_website, website_completed_at")
     .eq("user_id", matchedUser.id)
     .maybeSingle();
   const wasWebsiteLive = existingProfile?.has_website ?? false;
+  const now = new Date().toISOString();
+  // Only stamp the FIRST time a site goes live — later toggles don't move it.
+  const websiteCompletedAt = existingProfile?.website_completed_at ?? (hasWebsite ? now : null);
 
   const { error: upsertError } = await supabaseAdmin.from("client_profiles").upsert(
     {
@@ -38,7 +41,8 @@ export async function POST(request: Request) {
       has_website: !!hasWebsite,
       has_subscription: !!hasSubscription,
       monthly_amount: hasSubscription && monthlyAmount !== null && monthlyAmount !== undefined ? monthlyAmount : null,
-      updated_at: new Date().toISOString(),
+      website_completed_at: websiteCompletedAt,
+      updated_at: now,
     },
     { onConflict: "user_id" }
   );
