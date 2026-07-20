@@ -221,15 +221,18 @@ export default function Admin() {
     ]);
     const csv = [header, ...rows].map((row) => row.map((cell) => csvField(String(cell))).join(",")).join("\r\n");
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = `webskillet-messages-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.rel = "noopener";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Safari can fail to start the download if the blob URL is revoked
+    // immediately — give it a moment first.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   useEffect(() => {
