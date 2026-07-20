@@ -536,7 +536,6 @@ export default function WebSkillet() {
             >
               {plan.featured && <span className="ws-plan-badge">Most popular</span>}
               <h3>{plan.name}</h3>
-              <p className="ws-plan-price">{plan.price}</p>
               <p className="ws-plan-tagline">{plan.tagline}</p>
               <ul className="ws-plan-features">
                 {plan.features.map((f) => (
