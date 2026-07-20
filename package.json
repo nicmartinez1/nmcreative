@@ -15,6 +15,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "framer-motion": "latest",
+    "googleapis": "^173.0.0",
     "gsap": "latest",
     "lucide-react": "latest",
     "next": "latest",
