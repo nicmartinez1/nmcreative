@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     businessName,
     phone,
     email,
-    isStartup ? "New/startup business" : addressLine || "",
+    addressLine || "",
     isStartup,
     servicesList.join(", "),
     message || "",
