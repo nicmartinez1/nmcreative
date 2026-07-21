@@ -2244,11 +2244,20 @@ button.ws-btn-ghost:disabled {
 
 .ws-plan-card .ws-btn-primary,
 .ws-plan-card .ws-btn-ghost {
+  display: flex;
   justify-content: center;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.85rem 1.5rem;
+  text-align: center;
+}
+
+.ws-plan-contact-note {
+  font-size: 0.82rem;
+  color: rgba(21, 14, 40, 0.6);
+  text-align: center;
+  margin-bottom: 0.75rem;
 }
 
 .ws-plan-card button.ws-btn-primary {

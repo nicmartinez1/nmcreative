@@ -684,9 +684,14 @@ export default function ClientAccess() {
                         Request pending approval
                       </button>
                     ) : isLocked ? (
-                      <Link href="/contact" className="ws-btn-ghost">
-                        Contact to change plan
-                      </Link>
+                      <>
+                        <p className="ws-plan-contact-note">
+                          Curious about pricing for {plan.name}? Reach out any time.
+                        </p>
+                        <Link href="/contact" className="ws-btn-ghost">
+                          Contact to change plan
+                        </Link>
+                      </>
                     ) : (
                       <button
                         type="button"
