@@ -57,6 +57,7 @@ function Reveal({
 const serviceOptions = ["Web Design", "Social Media Management", "Ad Campaigns", "SEO Optimization"];
 
 export default function Contact() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [isStartup, setIsStartup] = useState(false);
   const [services, setServices] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -65,6 +66,13 @@ export default function Contact() {
 
   const toggleService = (s: string) => {
     setServices((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  };
+
+  const startAnotherRequest = () => {
+    formRef.current?.reset();
+    setIsStartup(false);
+    setServices([]);
+    setSubmitted(false);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -121,9 +129,12 @@ export default function Contact() {
               <span className="ws-eyebrow" style={{ color: "var(--growth-soft)" }}>Got it</span>
               <h3>Thanks, that&rsquo;s in.</h3>
               <p>We got your message and will reply soon with a plan and a rough price.</p>
+              <button type="button" className="ws-btn-ghost" onClick={startAnotherRequest}>
+                Submit another request
+              </button>
             </div>
           ) : (
-            <form className="ws-form" onSubmit={handleSubmit}>
+            <form className="ws-form" ref={formRef} onSubmit={handleSubmit}>
               <div className="ws-form-row">
                 <label className="ws-form-field">
                   <span>Business name</span>
@@ -178,11 +189,11 @@ export default function Contact() {
               </div>
 
               <label className="ws-form-field">
-                <span>What are you working with? (optional)</span>
+                <span>Need something more specific? (optional)</span>
                 <textarea
                   name="message"
                   rows={4}
-                  placeholder="Current site, rough budget, timeline, whatever's useful."
+                  placeholder="Tell us exactly what you need — current site, rough budget, timeline, or a specific request."
                 />
               </label>
 

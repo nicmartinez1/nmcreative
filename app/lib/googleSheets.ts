@@ -25,7 +25,7 @@ export const isGoogleSheetsConfigured = Boolean(loadServiceAccount() && SHEET_ID
 // Appends one row to the end of the sheet — the durable, ever-growing
 // record of every inquiry, kept outside the site's own database so the
 // database itself can be cleared out anytime without losing history.
-export async function appendContactRow(row: (string | boolean)[]) {
+export async function appendContactRow(row: string[]) {
   const serviceAccount = loadServiceAccount();
   if (!serviceAccount || !SHEET_ID) {
     return { ok: false, error: "Google Sheets isn't configured." };
