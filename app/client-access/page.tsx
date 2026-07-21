@@ -450,7 +450,7 @@ export default function ClientAccess() {
                       setMode("login");
                     }}
                   >
-                    Back to log in
+                    ← Back to log in
                   </button>
                 </div>
               ) : (
@@ -546,7 +546,7 @@ export default function ClientAccess() {
                             setError("");
                           }}
                         >
-                          Create an account
+                          Create an account →
                         </button>
                       </>
                     )}
@@ -561,7 +561,7 @@ export default function ClientAccess() {
                             setError("");
                           }}
                         >
-                          Log in
+                          ← Log in
                         </button>
                       </>
                     )}

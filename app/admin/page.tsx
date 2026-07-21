@@ -105,6 +105,9 @@ export default function Admin() {
   const [resolveSubmitting, setResolveSubmitting] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [messages, setMessages] = useState<ContactMessage[] | null>(null);
+  const [messageSearch, setMessageSearch] = useState("");
+  const [messageServiceFilter, setMessageServiceFilter] = useState("");
+  const [messageDateFilter, setMessageDateFilter] = useState("");
   const [pendingMessageDeletion, setPendingMessageDeletion] = useState<number | null>(null);
   const [pendingClearRead, setPendingClearRead] = useState(false);
   const [messageActionError, setMessageActionError] = useState("");
@@ -478,6 +481,18 @@ export default function Admin() {
   const websitesBuilt = (clients ?? []).filter((c) => c.has_website).length;
   const websiteRevenue = websitesBuilt * WEBSITE_BUILD_PRICE;
 
+  const filteredMessages = (messages ?? []).filter((m) => {
+    if (messageSearch && !m.business_name.toLowerCase().includes(messageSearch.toLowerCase())) return false;
+    if (messageServiceFilter && !m.services.includes(messageServiceFilter)) return false;
+    if (messageDateFilter) {
+      const d = new Date(m.created_at);
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (localDate !== messageDateFilter) return false;
+    }
+    return true;
+  });
+  const messageServices = Array.from(new Set((messages ?? []).flatMap((m) => m.services))).sort();
+
   if (checkingSession) {
     return (
       <div className="ws-root">
@@ -757,6 +772,35 @@ export default function Admin() {
 
           <section className="ws-section" style={{ paddingTop: 0 }}>
             <div className="ws-admin-messages">
+              <span className="ws-admin-activity-title">Referrals</span>
+              {referrals === null ? (
+                <p className="ws-admin-messages-empty">Loading…</p>
+              ) : referrals.length === 0 ? (
+                <p className="ws-admin-messages-empty">No referrals yet.</p>
+              ) : (
+                <ul className="ws-admin-messages-list">
+                  {referrals.map((r) => (
+                    <li key={r.referrer_user_id}>
+                      <div className="ws-admin-message-head">
+                        <span className="ws-admin-message-from">
+                          {r.business_name ? `${r.business_name} · ${r.email}` : r.email}
+                        </span>
+                        <span className="ws-admin-message-when">
+                          {r.count} referral{r.count === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <p className="ws-admin-message-meta">
+                        {r.referred.map((x) => `${x.email} (${x.source}, ${formatDate(x.created_at)})`).join(" · ")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+
+          <section className="ws-section" style={{ paddingTop: 0 }}>
+            <div className="ws-admin-messages">
               <div className="ws-admin-messages-header">
                 <span className="ws-admin-activity-title">
                   Messages{" "}
@@ -774,14 +818,55 @@ export default function Admin() {
                   </div>
                 )}
               </div>
+              {messages && messages.length > 0 && (
+                <div className="ws-admin-messages-filters">
+                  <input
+                    type="text"
+                    placeholder="Search business name…"
+                    value={messageSearch}
+                    onChange={(e) => setMessageSearch(e.target.value)}
+                  />
+                  <select
+                    value={messageServiceFilter}
+                    onChange={(e) => setMessageServiceFilter(e.target.value)}
+                  >
+                    <option value="">All types</option>
+                    {messageServices.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="date"
+                    value={messageDateFilter}
+                    onChange={(e) => setMessageDateFilter(e.target.value)}
+                  />
+                  {(messageSearch || messageServiceFilter || messageDateFilter) && (
+                    <button
+                      type="button"
+                      className="ws-btn-ghost"
+                      onClick={() => {
+                        setMessageSearch("");
+                        setMessageServiceFilter("");
+                        setMessageDateFilter("");
+                      }}
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
               {messageActionError && <p className="ws-portal-error">{messageActionError}</p>}
               {messages === null ? (
                 <p className="ws-admin-messages-empty">Loading…</p>
               ) : messages.length === 0 ? (
                 <p className="ws-admin-messages-empty">No inquiries yet.</p>
+              ) : filteredMessages.length === 0 ? (
+                <p className="ws-admin-messages-empty">No messages match your filters.</p>
               ) : (
                 <ul className="ws-admin-messages-list">
-                  {messages.map((m) => (
+                  {filteredMessages.map((m) => (
                     <li key={m.id} className={m.read ? "" : "is-unread"}>
                       <div className="ws-admin-message-head">
                         <span className="ws-admin-message-from">
@@ -812,35 +897,6 @@ export default function Admin() {
                           Delete
                         </button>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
-
-          <section className="ws-section" style={{ paddingTop: 0 }}>
-            <div className="ws-admin-messages">
-              <span className="ws-admin-activity-title">Referrals</span>
-              {referrals === null ? (
-                <p className="ws-admin-messages-empty">Loading…</p>
-              ) : referrals.length === 0 ? (
-                <p className="ws-admin-messages-empty">No referrals yet.</p>
-              ) : (
-                <ul className="ws-admin-messages-list">
-                  {referrals.map((r) => (
-                    <li key={r.referrer_user_id}>
-                      <div className="ws-admin-message-head">
-                        <span className="ws-admin-message-from">
-                          {r.business_name ? `${r.business_name} · ${r.email}` : r.email}
-                        </span>
-                        <span className="ws-admin-message-when">
-                          {r.count} referral{r.count === 1 ? "" : "s"}
-                        </span>
-                      </div>
-                      <p className="ws-admin-message-meta">
-                        {r.referred.map((x) => `${x.email} (${x.source}, ${formatDate(x.created_at)})`).join(" · ")}
-                      </p>
                     </li>
                   ))}
                 </ul>
