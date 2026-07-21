@@ -22,9 +22,13 @@ function loadServiceAccount() {
 
 export const isGoogleSheetsConfigured = Boolean(loadServiceAccount() && SHEET_ID);
 
-// Appends one row to the end of the sheet — the durable, ever-growing
-// record of every inquiry, kept outside the site's own database so the
-// database itself can be cleared out anytime without losing history.
+// Inserts one row right below the header (row 2) — the durable,
+// ever-growing record of every inquiry, kept outside the site's own
+// database so the database itself can be cleared out anytime without
+// losing history. Newest first, so a fresh blank row 2 is inserted
+// (pushing everything else down) before it's filled in — the Sheets
+// API's own "append" only ever adds to the bottom, so this is a
+// two-step insert-then-write instead of a single append call.
 export async function appendContactRow(row: string[]) {
   const serviceAccount = loadServiceAccount();
   if (!serviceAccount || !SHEET_ID) {
@@ -39,13 +43,35 @@ export async function appendContactRow(row: string[]) {
     });
 
     const sheets = google.sheets({ version: "v4", auth });
-    await sheets.spreadsheets.values.append({
+
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+    const sheet = meta.data.sheets?.find((s) => s.properties?.title === "Sheet1") ?? meta.data.sheets?.[0];
+    const sheetId = sheet?.properties?.sheetId;
+    if (sheetId === undefined || sheetId === null) {
+      return { ok: false, error: "Couldn't find the Sheet1 tab." };
+    }
+
+    await sheets.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:I",
+      requestBody: {
+        requests: [
+          {
+            insertDimension: {
+              range: { sheetId, dimension: "ROWS", startIndex: 1, endIndex: 2 },
+              inheritFromBefore: false,
+            },
+          },
+        ],
+      },
+    });
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: "Sheet1!A2",
       valueInputOption: "USER_ENTERED",
-      insertDataOption: "INSERT_ROWS",
       requestBody: { values: [row] },
     });
+
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to reach Google Sheets." };
