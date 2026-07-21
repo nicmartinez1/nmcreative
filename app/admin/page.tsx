@@ -225,38 +225,6 @@ export default function Admin() {
     fetchMessages();
   };
 
-  const csvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
-
-  const exportMessagesCsv = () => {
-    if (!messages || messages.length === 0) return;
-    const header = ["Business name", "Email", "Phone", "Address", "New/startup", "Interested in", "Message", "Received", "Read"];
-    const rows = messages.map((m) => [
-      m.business_name,
-      m.email,
-      m.phone,
-      m.is_startup ? "New/startup business" : m.address || "",
-      m.is_startup ? "Yes" : "No",
-      m.services.join("; "),
-      m.message || "",
-      formatDate(m.created_at),
-      m.read ? "Yes" : "No",
-    ]);
-    const csv = [header, ...rows].map((row) => row.map((cell) => csvField(String(cell))).join(",")).join("\r\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `webskillet-messages-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    // Safari can fail to start the download if the blob URL is revoked
-    // immediately — give it a moment first.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setCheckingSession(false);
@@ -798,16 +766,11 @@ export default function Admin() {
                     </span>
                   )}
                 </span>
-                {messages && messages.length > 0 && (
+                {messages && messages.some((m) => m.read) && (
                   <div className="ws-admin-messages-header-actions">
-                    <button type="button" className="ws-btn-ghost" onClick={exportMessagesCsv}>
-                      Export as CSV
+                    <button type="button" className="ws-btn-ghost" onClick={() => setPendingClearRead(true)}>
+                      Clear read messages
                     </button>
-                    {messages.some((m) => m.read) && (
-                      <button type="button" className="ws-btn-ghost" onClick={() => setPendingClearRead(true)}>
-                        Clear read messages
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -824,7 +787,16 @@ export default function Admin() {
                         <span className="ws-admin-message-from">
                           {m.business_name} · <a href={`mailto:${m.email}`}>{m.email}</a> · {m.phone}
                         </span>
-                        <span className="ws-admin-message-when">{formatDate(m.created_at)}</span>
+                        <div className="ws-admin-message-head-right">
+                          <span className="ws-admin-message-when">{formatDate(m.created_at)}</span>
+                          <button
+                            type="button"
+                            className={m.read ? "ws-btn-ghost" : "ws-btn-primary"}
+                            onClick={() => toggleMessageRead(m)}
+                          >
+                            {m.read ? "Mark unread" : "Mark as read"}
+                          </button>
+                        </div>
                       </div>
                       <p className="ws-admin-message-meta">
                         {m.is_startup ? "New/startup business" : m.address || "No address given"}
@@ -832,9 +804,6 @@ export default function Admin() {
                       </p>
                       {m.message && <p className="ws-admin-message-body">{m.message}</p>}
                       <div className="ws-admin-message-actions">
-                        <button type="button" className="ws-btn-ghost" onClick={() => toggleMessageRead(m)}>
-                          {m.read ? "Mark unread" : "Mark read"}
-                        </button>
                         <button
                           type="button"
                           className="ws-btn-ghost"

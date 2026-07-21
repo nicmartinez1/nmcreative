@@ -2498,6 +2498,18 @@ button:focus-visible {
   color: inherit;
 }
 
+.ws-admin-message-head-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ws-admin-message-head-right .ws-btn-primary,
+.ws-admin-message-head-right .ws-btn-ghost {
+  font-size: 0.76rem;
+  padding: 0.4rem 0.85rem;
+}
+
 .ws-admin-message-when {
   font-family: var(--font-mono);
   font-size: 0.78rem;
