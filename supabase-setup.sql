@@ -42,6 +42,7 @@ create table public.client_profiles (
   website_completed_at timestamptz,
   checkin_email_sent_at timestamptz,
   feedback_email_sent_at timestamptz,
+  signup_survey_sent_at timestamptz,
   updated_at timestamptz not null default now()
 );
 
@@ -72,7 +73,8 @@ create policy "Clients can view their own profile"
 -- alter table public.client_profiles
 --   add column if not exists website_completed_at timestamptz,
 --   add column if not exists checkin_email_sent_at timestamptz,
---   add column if not exists feedback_email_sent_at timestamptz;
+--   add column if not exists feedback_email_sent_at timestamptz,
+--   add column if not exists signup_survey_sent_at timestamptz;
 -- -- Anyone already marked has_website = true had their website
 -- -- completed at some unknown past point — backdate it far enough
 -- -- that the one-time feedback email fires on the very next cron run:

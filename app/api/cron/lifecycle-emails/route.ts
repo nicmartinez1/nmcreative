@@ -3,7 +3,9 @@ import { supabaseAdmin, isAdminConfigured } from "../../../lib/supabaseAdmin";
 import { sendEmail } from "../../../lib/resend";
 
 const CRON_SECRET = process.env.CRON_SECRET;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.toLowerCase();
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SURVEY_AFTER_DAYS = 7;
 const CHECKIN_AFTER_DAYS = 30;
 const FEEDBACK_AFTER_DAYS = 14;
 
@@ -28,6 +30,51 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Admin isn't configured yet." }, { status: 500 });
   }
 
+  const now = Date.now();
+  let surveysSent = 0;
+  let checkinsSent = 0;
+  let feedbackSent = 0;
+
+  // Post-signup survey: 7 days after account creation, for EVERY client
+  // regardless of plan/subscription status — plan_changes-driven data
+  // only covers clients who've picked a plan, which misses brand new
+  // signups, so this scans auth.users directly instead.
+  const { data: userList, error: userListError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+  if (userListError) {
+    return NextResponse.json({ error: userListError.message }, { status: 500 });
+  }
+
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from("client_profiles")
+    .select("user_id, signup_survey_sent_at");
+  if (profilesError) {
+    return NextResponse.json({ error: profilesError.message }, { status: 500 });
+  }
+  const surveySentByUserId = new Map(profiles.map((p) => [p.user_id, p.signup_survey_sent_at]));
+
+  for (const u of userList.users) {
+    if (!u.email || u.email.toLowerCase() === ADMIN_EMAIL) continue;
+    if (!u.created_at) continue;
+
+    const alreadySurveyed = surveySentByUserId.get(u.id);
+    if (alreadySurveyed) continue;
+
+    const accountAgeMs = now - new Date(u.created_at).getTime();
+    if (accountAgeMs < SURVEY_AFTER_DAYS * DAY_MS) continue;
+
+    const result = await sendEmail({
+      to: u.email,
+      subject: "How's it going so far?",
+      html: `<p>You've had your Web Skillet account for a week now — we'd love a quick pulse check.</p><p>How's everything going? Reply to this email and let us know — good, bad, or anywhere in between.</p><p>— The Web Skillet team</p>`,
+    });
+    if (result.ok) {
+      await supabaseAdmin
+        .from("client_profiles")
+        .upsert({ user_id: u.id, signup_survey_sent_at: new Date().toISOString() }, { onConflict: "user_id" });
+      surveysSent++;
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from("client_current_plans")
     .select("user_id, email, current_plan, plan_since, has_subscription, website_completed_at, checkin_email_sent_at, feedback_email_sent_at");
@@ -37,9 +84,6 @@ export async function GET(request: Request) {
   }
 
   const clients = data as ClientRow[];
-  const now = Date.now();
-  let checkinsSent = 0;
-  let feedbackSent = 0;
 
   for (const c of clients) {
     // Recurring "how's it going / want to upgrade" check-in, once per
@@ -83,5 +127,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ checkinsSent, feedbackSent, checked: clients.length });
+  return NextResponse.json({ surveysSent, checkinsSent, feedbackSent, checked: clients.length });
 }

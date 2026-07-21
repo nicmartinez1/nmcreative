@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, isAdminConfigured, verifyAdmin, findUserByEmail } from "../../../lib/supabaseAdmin";
+import { sendEmail } from "../../../lib/resend";
 
 export async function POST(request: Request) {
   if (!isAdminConfigured) {
@@ -31,6 +32,14 @@ export async function POST(request: Request) {
 
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  if (matchedUser.email) {
+    await sendEmail({
+      to: matchedUser.email,
+      subject: "Sorry to see you go",
+      html: `<p>Your subscription with Web Skillet has been cancelled — sorry to see you go.</p><p>Here's what happens next:</p><ul><li>Any live website stays up as-is; nothing gets taken down automatically.</li><li>You can still log in to your <a href="https://webskillet.net/client-access">client portal</a> any time to review your account.</li><li>If you ever want to come back or have questions about what changes, just reply to this email — we're happy to help.</li></ul><p>Thanks for giving us a shot.</p><p>— The Web Skillet team</p>`,
+    });
   }
 
   return NextResponse.json({ success: true });
