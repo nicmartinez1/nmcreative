@@ -644,7 +644,7 @@ export default function ClientAccess() {
                 {pendingRequestPlan
                   ? `Your request to switch to ${pendingRequestPlan} is awaiting approval.`
                   : isLocked && nextSwitchDate
-                    ? `You can request another switch on ${nextSwitchDate.toLocaleDateString(undefined, {
+                    ? `You can request a change that will take effect on ${nextSwitchDate.toLocaleDateString(undefined, {
                         month: "long",
                         day: "numeric",
                         year: "numeric",
