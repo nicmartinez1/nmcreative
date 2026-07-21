@@ -1791,8 +1791,8 @@ button.ws-btn-ghost:disabled {
 }
 
 .ws-form-pills {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.6rem;
 }
 
@@ -1805,6 +1805,7 @@ button.ws-btn-ghost:disabled {
   background: #fff;
   color: rgba(21, 14, 40, 0.7);
   cursor: pointer;
+  text-align: center;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 

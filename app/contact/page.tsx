@@ -198,7 +198,12 @@ export default function Contact() {
               </label>
 
               {error && <p className="ws-portal-error">{error}</p>}
-              <button type="submit" className="ws-btn-primary" disabled={submitting}>
+              <button
+                type="submit"
+                className="ws-btn-primary"
+                style={{ justifySelf: "center" }}
+                disabled={submitting}
+              >
                 {submitting ? "Sending…" : "Request pricing"}
               </button>
             </form>
