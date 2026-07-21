@@ -94,7 +94,7 @@ export default function Contact() {
         isStartup,
         services,
         message: formData.get("message"),
-        referralCode: window.localStorage.getItem("ws_referral_code"),
+        referralCode: formData.get("referralCode"),
       }),
     });
     setSubmitting(false);
@@ -196,6 +196,11 @@ export default function Contact() {
                   rows={4}
                   placeholder="Tell us exactly what you need — current site, rough budget, timeline, or a specific request."
                 />
+              </label>
+
+              <label className="ws-form-field">
+                <span>Referral code (optional)</span>
+                <input type="text" name="referralCode" placeholder="e.g. RIVERSIDE-8K2Q" />
               </label>
 
               {error && <p className="ws-portal-error">{error}</p>}

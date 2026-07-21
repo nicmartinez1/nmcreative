@@ -91,6 +91,7 @@ export default function ClientAccess() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [signupReferralCode, setSignupReferralCode] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(plans[0].name);
@@ -98,7 +99,8 @@ export default function ClientAccess() {
   const [hasWebsite, setHasWebsite] = useState(false);
   const [pendingRequestPlan, setPendingRequestPlan] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [myReferralCode, setMyReferralCode] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -148,15 +150,17 @@ export default function ClientAccess() {
     if (!token) return;
     const res = await fetch("/api/referrals/mine", { headers: { Authorization: `Bearer ${token}` } });
     const body = await res.json();
-    if (res.ok) setReferralCount(body.count ?? 0);
+    if (res.ok) {
+      setReferralCount(body.count ?? 0);
+      setMyReferralCode(body.referralCode ?? null);
+    }
   };
 
-  const copyReferralLink = () => {
-    if (!userId) return;
-    const link = `${window.location.origin}/?ref=${userId}`;
-    navigator.clipboard.writeText(link).then(() => {
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2500);
+  const copyReferralCode = () => {
+    if (!myReferralCode) return;
+    navigator.clipboard.writeText(myReferralCode).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2500);
     });
   };
 
@@ -249,7 +253,7 @@ export default function ClientAccess() {
     fetch("/api/notify-signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, referralCode: window.localStorage.getItem("ws_referral_code") }),
+      body: JSON.stringify({ email, referralCode: signupReferralCode }),
     }).catch(() => {
       // Best-effort — a failed welcome email shouldn't block signup.
     });
@@ -458,16 +462,27 @@ export default function ClientAccess() {
                     }
                   >
                     {mode === "signup" && (
-                      <label className="ws-form-field">
-                        <span>Business name</span>
-                        <input
-                          type="text"
-                          placeholder="Riverside Coffee Co."
-                          value={businessName}
-                          onChange={(e) => setBusinessName(e.target.value)}
-                          required
-                        />
-                      </label>
+                      <>
+                        <label className="ws-form-field">
+                          <span>Business name</span>
+                          <input
+                            type="text"
+                            placeholder="Riverside Coffee Co."
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            required
+                          />
+                        </label>
+                        <label className="ws-form-field">
+                          <span>Referral code (optional)</span>
+                          <input
+                            type="text"
+                            placeholder="e.g. RIVERSIDE-8K2Q"
+                            value={signupReferralCode}
+                            onChange={(e) => setSignupReferralCode(e.target.value)}
+                          />
+                        </label>
+                      </>
                     )}
                     <label className="ws-form-field">
                       <span>Email</span>
@@ -619,8 +634,8 @@ export default function ClientAccess() {
             <Reveal delay={160} className="ws-portal-card">
               <h3>Refer a business</h3>
               <p>
-                Know another business that could use this? Share your link — when they sign up or reach
-                out through it, we&rsquo;ll know it came from you.
+                Know another business that could use this? Have them mention your code when they sign up
+                or reach out, and we&rsquo;ll know it came from you.
                 {referralCount > 0 && (
                   <>
                     {" "}
@@ -629,8 +644,9 @@ export default function ClientAccess() {
                   </>
                 )}
               </p>
-              <button type="button" className="ws-btn-ghost" onClick={copyReferralLink}>
-                {linkCopied ? "Copied!" : "Copy your referral link"}
+              {myReferralCode && <p className="ws-portal-referral-code">{myReferralCode}</p>}
+              <button type="button" className="ws-btn-ghost" onClick={copyReferralCode} disabled={!myReferralCode}>
+                {codeCopied ? "Copied!" : "Copy your referral code"}
               </button>
             </Reveal>
           </section>

@@ -43,6 +43,7 @@ create table public.client_profiles (
   checkin_email_sent_at timestamptz,
   feedback_email_sent_at timestamptz,
   signup_survey_sent_at timestamptz,
+  referral_code text unique,
   updated_at timestamptz not null default now()
 );
 
@@ -74,7 +75,8 @@ create policy "Clients can view their own profile"
 --   add column if not exists website_completed_at timestamptz,
 --   add column if not exists checkin_email_sent_at timestamptz,
 --   add column if not exists feedback_email_sent_at timestamptz,
---   add column if not exists signup_survey_sent_at timestamptz;
+--   add column if not exists signup_survey_sent_at timestamptz,
+--   add column if not exists referral_code text unique;
 -- -- Anyone already marked has_website = true had their website
 -- -- completed at some unknown past point — backdate it far enough
 -- -- that the one-time feedback email fires on the very next cron run:
@@ -238,11 +240,12 @@ create table public.contact_messages (
 alter table public.contact_messages enable row level security;
 revoke all on public.contact_messages from anon, authenticated;
 
--- Referrals: every client has a personal link (webskillet.net/?ref=<their
--- user id>). When someone signs up or submits the contact form having
--- arrived via that link, one row lands here crediting the referrer —
--- purely a tracking log for you to review and pay out manually, no
--- automatic discounting or payment happens from this table.
+-- Referrals: every client has a short referral_code (see
+-- client_profiles.referral_code, generated automatically). When
+-- someone signs up or submits the contact form mentioning that code,
+-- one row lands here crediting the referrer — purely a tracking log
+-- for you to review and pay out manually, no automatic discounting or
+-- payment happens from this table.
 create table public.referrals (
   id bigint generated always as identity primary key,
   referrer_user_id uuid references auth.users (id) not null,

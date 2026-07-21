@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { findUserByEmail } from "../../lib/supabaseAdmin";
 import { sendEmail } from "../../lib/resend";
-import { recordReferral } from "../../lib/referrals";
+import { recordReferral, ensureReferralCode } from "../../lib/referrals";
 
 // New accounts only — guards against this public endpoint being used to
 // re-send the welcome email to arbitrary existing accounts on demand.
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   }
 
   await recordReferral(referralCode, email, "signup");
+  await ensureReferralCode(user.id, user.user_metadata?.business_name);
 
   await sendEmail({
     to: email,

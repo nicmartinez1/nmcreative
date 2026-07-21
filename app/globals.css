@@ -1881,6 +1881,20 @@ button.ws-btn-ghost:disabled {
   margin-bottom: 1.1rem;
 }
 
+.ws-portal-referral-code {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--paper);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+}
+
 .ws-portal-website-banner {
   max-width: 46rem;
   margin: 0 auto 1.5rem;
