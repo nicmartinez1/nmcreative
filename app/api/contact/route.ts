@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { appendContactRow } from "../../lib/googleSheets";
+import { recordReferral } from "../../lib/referrals";
 
 function formatReceivedAt(date: Date) {
   const formatted = new Intl.DateTimeFormat("en-US", {
@@ -16,7 +17,7 @@ function formatReceivedAt(date: Date) {
 }
 
 export async function POST(request: Request) {
-  const { businessName, phone, email, address, isStartup, services, message } = await request.json();
+  const { businessName, phone, email, address, isStartup, services, message, referralCode } = await request.json();
 
   if (!businessName || !phone || !email) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -38,6 +39,8 @@ export async function POST(request: Request) {
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
+
+  await recordReferral(referralCode, email, "contact");
 
   // Best-effort — the durable ongoing record lives in the Sheet, but a
   // failure here shouldn't block the inquiry from landing in the inbox.

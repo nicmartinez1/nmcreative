@@ -1,4 +1,5 @@
 import "./globals.css";
+import ReferralCapture from "./components/ReferralCapture";
 
 export const metadata = {
   metadataBase: new URL("https://webskillet.net"),
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ReferralCapture />
+        {children}
+      </body>
     </html>
   );
 }

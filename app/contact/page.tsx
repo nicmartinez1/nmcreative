@@ -94,6 +94,7 @@ export default function Contact() {
         isStartup,
         services,
         message: formData.get("message"),
+        referralCode: window.localStorage.getItem("ws_referral_code"),
       }),
     });
     setSubmitting(false);

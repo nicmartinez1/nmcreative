@@ -238,6 +238,22 @@ create table public.contact_messages (
 alter table public.contact_messages enable row level security;
 revoke all on public.contact_messages from anon, authenticated;
 
+-- Referrals: every client has a personal link (webskillet.net/?ref=<their
+-- user id>). When someone signs up or submits the contact form having
+-- arrived via that link, one row lands here crediting the referrer —
+-- purely a tracking log for you to review and pay out manually, no
+-- automatic discounting or payment happens from this table.
+create table public.referrals (
+  id bigint generated always as identity primary key,
+  referrer_user_id uuid references auth.users (id) not null,
+  referred_email text not null,
+  source text not null check (source in ('contact', 'signup')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.referrals enable row level security;
+revoke all on public.referrals from anon, authenticated;
+
 -- ---------------------------------------------------------------------
 -- Admin operations (run these from the SQL Editor whenever needed)
 -- ---------------------------------------------------------------------

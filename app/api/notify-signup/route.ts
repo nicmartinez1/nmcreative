@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { findUserByEmail } from "../../lib/supabaseAdmin";
 import { sendEmail } from "../../lib/resend";
+import { recordReferral } from "../../lib/referrals";
 
 // New accounts only — guards against this public endpoint being used to
 // re-send the welcome email to arbitrary existing accounts on demand.
 const RECENT_SIGNUP_WINDOW_MS = 10 * 60 * 1000;
 
 export async function POST(request: Request) {
-  const { email } = await request.json();
+  const { email, referralCode } = await request.json();
   if (!email) {
     return NextResponse.json({ error: "Missing email." }, { status: 400 });
   }
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
   if (accountAge > RECENT_SIGNUP_WINDOW_MS) {
     return NextResponse.json({ success: true });
   }
+
+  await recordReferral(referralCode, email, "signup");
 
   await sendEmail({
     to: email,

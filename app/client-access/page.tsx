@@ -97,6 +97,8 @@ export default function ClientAccess() {
   const [lastChangedAt, setLastChangedAt] = useState<string | null>(null);
   const [hasWebsite, setHasWebsite] = useState(false);
   const [pendingRequestPlan, setPendingRequestPlan] = useState<string | null>(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -140,6 +142,24 @@ export default function ClientAccess() {
     setPendingRequestPlan(existingRequest?.plan_name ?? null);
   };
 
+  const loadReferralCount = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    const res = await fetch("/api/referrals/mine", { headers: { Authorization: `Bearer ${token}` } });
+    const body = await res.json();
+    if (res.ok) setReferralCount(body.count ?? 0);
+  };
+
+  const copyReferralLink = () => {
+    if (!userId) return;
+    const link = `${window.location.origin}/?ref=${userId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    });
+  };
+
   const PLAN_COOLDOWN_DAYS = 30;
   const nextSwitchDate = lastChangedAt
     ? new Date(new Date(lastChangedAt).getTime() + PLAN_COOLDOWN_DAYS * 24 * 60 * 60 * 1000)
@@ -160,6 +180,7 @@ export default function ClientAccess() {
           setUserId(data.session.user.id);
           setEmail(data.session.user.email ?? "");
           loadPlan(data.session.user.id);
+          loadReferralCount();
         }
       })
       .catch(() => {
@@ -173,6 +194,7 @@ export default function ClientAccess() {
         setUserId(session.user.id);
         setEmail(session.user.email ?? "");
         loadPlan(session.user.id);
+        loadReferralCount();
       } else {
         setUserId(null);
       }
@@ -227,7 +249,7 @@ export default function ClientAccess() {
     fetch("/api/notify-signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, referralCode: window.localStorage.getItem("ws_referral_code") }),
     }).catch(() => {
       // Best-effort — a failed welcome email shouldn't block signup.
     });
@@ -592,6 +614,24 @@ export default function ClientAccess() {
               <Link href="/contact" className="ws-btn-ghost">
                 Message support →
               </Link>
+            </Reveal>
+
+            <Reveal delay={160} className="ws-portal-card">
+              <h3>Refer a business</h3>
+              <p>
+                Know another business that could use this? Share your link — when they sign up or reach
+                out through it, we&rsquo;ll know it came from you.
+                {referralCount > 0 && (
+                  <>
+                    {" "}
+                    You&rsquo;ve referred <strong>{referralCount}</strong>{" "}
+                    {referralCount === 1 ? "business" : "businesses"} so far.
+                  </>
+                )}
+              </p>
+              <button type="button" className="ws-btn-ghost" onClick={copyReferralLink}>
+                {linkCopied ? "Copied!" : "Copy your referral link"}
+              </button>
             </Reveal>
           </section>
 

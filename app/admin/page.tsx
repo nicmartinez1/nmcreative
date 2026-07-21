@@ -41,6 +41,14 @@ type PlanRequest = {
   requested_at: string;
 };
 
+type ReferralSummary = {
+  referrer_user_id: string;
+  email: string;
+  business_name: string | null;
+  count: number;
+  referred: { email: string; source: string; created_at: string }[];
+};
+
 type ContactMessage = {
   id: number;
   business_name: string;
@@ -100,6 +108,7 @@ export default function Admin() {
   const [pendingMessageDeletion, setPendingMessageDeletion] = useState<number | null>(null);
   const [pendingClearRead, setPendingClearRead] = useState(false);
   const [messageActionError, setMessageActionError] = useState("");
+  const [referrals, setReferrals] = useState<ReferralSummary[] | null>(null);
 
   const fetchClients = async () => {
     setLoadError("");
@@ -144,10 +153,23 @@ export default function Admin() {
     if (res.ok) setMessages(body.messages);
   };
 
+  const fetchReferrals = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+
+    const res = await fetch("/api/admin/referrals", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (res.ok) setReferrals(body.referrals);
+  };
+
   const refreshData = () => {
     fetchClients();
     fetchPlanRequest();
     fetchMessages();
+    fetchReferrals();
   };
 
   const toggleMessageRead = async (m: ContactMessage) => {
@@ -821,6 +843,35 @@ export default function Admin() {
                           Delete
                         </button>
                       </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+
+          <section className="ws-section" style={{ paddingTop: 0 }}>
+            <div className="ws-admin-messages">
+              <span className="ws-admin-activity-title">Referrals</span>
+              {referrals === null ? (
+                <p className="ws-admin-messages-empty">Loading…</p>
+              ) : referrals.length === 0 ? (
+                <p className="ws-admin-messages-empty">No referrals yet.</p>
+              ) : (
+                <ul className="ws-admin-messages-list">
+                  {referrals.map((r) => (
+                    <li key={r.referrer_user_id}>
+                      <div className="ws-admin-message-head">
+                        <span className="ws-admin-message-from">
+                          {r.business_name ? `${r.business_name} · ${r.email}` : r.email}
+                        </span>
+                        <span className="ws-admin-message-when">
+                          {r.count} referral{r.count === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <p className="ws-admin-message-meta">
+                        {r.referred.map((x) => `${x.email} (${x.source}, ${formatDate(x.created_at)})`).join(" · ")}
+                      </p>
                     </li>
                   ))}
                 </ul>
