@@ -119,10 +119,11 @@ export default function Contact() {
       <header className="ws-section" style={{ paddingTop: "clamp(8rem, 14vw, 11rem)" }}>
         <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
           <span className="ws-eyebrow">Contact</span>
-          <h2>Tell us about the business.</h2>
+          <h2>Schedule a call.</h2>
           <p>
-            A few details on what you run and what you need, and we&rsquo;ll
-            reply with a plan and a rough price, not a sales pitch.
+            Pick a time that works below, or skip straight to the{" "}
+            <a href="#request-pricing-form">form</a> with a few details on what you run and what you
+            need — we&rsquo;ll reply with a plan and a rough price, not a sales pitch.
           </p>
           <p>
             Prefer email? Send us a message about our services directly at{" "}
@@ -131,7 +132,28 @@ export default function Contact() {
         </Reveal>
       </header>
 
-      <section className="ws-section" style={{ paddingTop: 0, paddingBottom: "clamp(5rem, 10vw, 8rem)" }}>
+      <section className="ws-section" style={{ paddingTop: 0 }}>
+        <div className="ws-form-card ws-form-card-static">
+          <span className="ws-eyebrow">Or talk it through</span>
+          <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule a call</h3>
+          <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
+            Free, no pressure — just a quick conversation about what your business needs.{" "}
+            <a href="#request-pricing-form">Prefer a form instead? ↓</a>
+          </p>
+          {CALENDLY_URL ? (
+            <>
+              <div className="calendly-inline-widget" data-url={CALENDLY_URL} style={{ minWidth: "280px", height: "700px" }} />
+              <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="lazyOnload" />
+            </>
+          ) : (
+            <p className="ws-portal-error">
+              Scheduling isn&rsquo;t connected yet — add NEXT_PUBLIC_CALENDLY_URL to enable it.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section id="request-pricing-form" className="ws-section" style={{ paddingTop: 0, paddingBottom: "clamp(5rem, 10vw, 8rem)" }}>
         <div className="ws-form-card ws-form-card-static">
           {submitted ? (
             <div className="ws-form-success">
@@ -221,26 +243,6 @@ export default function Contact() {
                 {submitting ? "Sending…" : "Request pricing"}
               </button>
             </form>
-          )}
-        </div>
-      </section>
-
-      <section className="ws-section" style={{ paddingTop: 0 }}>
-        <div className="ws-form-card ws-form-card-static" style={{ maxWidth: "56rem" }}>
-          <span className="ws-eyebrow">Or talk it through</span>
-          <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule a call</h3>
-          <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
-            Free, no pressure — just a quick conversation about what your business needs.
-          </p>
-          {CALENDLY_URL ? (
-            <>
-              <div className="calendly-inline-widget" data-url={CALENDLY_URL} style={{ minWidth: "280px", height: "700px" }} />
-              <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="lazyOnload" />
-            </>
-          ) : (
-            <p className="ws-portal-error">
-              Scheduling isn&rsquo;t connected yet — add NEXT_PUBLIC_CALENDLY_URL to enable it.
-            </p>
           )}
         </div>
       </section>
