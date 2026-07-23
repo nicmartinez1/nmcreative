@@ -2,8 +2,11 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import SiteNav from "../components/SiteNav";
 import "../globals.css";
+
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL;
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
   const ref = useRef<T | null>(null);
@@ -213,6 +216,26 @@ export default function Contact() {
                 {submitting ? "Sending…" : "Request pricing"}
               </button>
             </form>
+          )}
+        </div>
+      </section>
+
+      <section className="ws-section" style={{ paddingTop: 0 }}>
+        <div className="ws-form-card ws-form-card-static" style={{ maxWidth: "56rem" }}>
+          <span className="ws-eyebrow">Or talk it through</span>
+          <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule an intro call</h3>
+          <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
+            Free, no pressure — just a quick conversation about what your business needs.
+          </p>
+          {CALENDLY_URL ? (
+            <>
+              <div className="calendly-inline-widget" data-url={CALENDLY_URL} style={{ minWidth: "280px", height: "700px" }} />
+              <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="lazyOnload" />
+            </>
+          ) : (
+            <p className="ws-portal-error">
+              Scheduling isn&rsquo;t connected yet — add NEXT_PUBLIC_CALENDLY_URL to enable it.
+            </p>
           )}
         </div>
       </section>

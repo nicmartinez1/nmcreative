@@ -101,6 +101,10 @@ export default function ClientAccess() {
   const [referralCount, setReferralCount] = useState(0);
   const [myReferralCode, setMyReferralCode] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [quickMessage, setQuickMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageSent, setMessageSent] = useState(false);
+  const [messageError, setMessageError] = useState("");
   const [switchConfirmation, setSwitchConfirmation] = useState("");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -162,6 +166,31 @@ export default function ClientAccess() {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2500);
     });
+  };
+
+  const sendQuickMessage = async () => {
+    if (!quickMessage.trim()) return;
+    setMessageError("");
+    setSendingMessage(true);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const res = await fetch("/api/client-message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ message: quickMessage }),
+    });
+    setSendingMessage(false);
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setMessageError(body.error ?? "Couldn't send that — try again in a moment.");
+      return;
+    }
+
+    setQuickMessage("");
+    setMessageSent(true);
+    setTimeout(() => setMessageSent(false), 4000);
   };
 
   const PLAN_COOLDOWN_DAYS = 30;
@@ -623,12 +652,25 @@ export default function ClientAccess() {
             <Reveal delay={80} className="ws-portal-card">
               <h3>Need support?</h3>
               <p>
-                Bug, question, or a small change you need made — send it
-                over and your team will get back to you.
+                Bug, question, or a small change you need made — send it straight over, no form to fill
+                out.
               </p>
-              <Link href="/contact" className="ws-btn-ghost">
-                Message support →
-              </Link>
+              <textarea
+                className="ws-portal-message-input"
+                rows={3}
+                placeholder="What's up?"
+                value={quickMessage}
+                onChange={(e) => setQuickMessage(e.target.value)}
+              />
+              {messageError && <p className="ws-portal-error">{messageError}</p>}
+              <button
+                type="button"
+                className="ws-btn-primary"
+                onClick={sendQuickMessage}
+                disabled={sendingMessage || !quickMessage.trim()}
+              >
+                {sendingMessage ? "Sending…" : messageSent ? "Sent!" : "Send message"}
+              </button>
             </Reveal>
 
             <Reveal delay={160} className="ws-portal-card">

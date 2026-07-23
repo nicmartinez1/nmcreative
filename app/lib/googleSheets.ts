@@ -22,6 +22,19 @@ function loadServiceAccount() {
 
 export const isGoogleSheetsConfigured = Boolean(loadServiceAccount() && SHEET_ID);
 
+export function formatReceivedAt(date: Date) {
+  const formatted = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+  return formatted.replace(" AM", "am").replace(" PM", "pm");
+}
+
 // Inserts one row right below the header (row 2) — the durable,
 // ever-growing record of every inquiry, kept outside the site's own
 // database so the database itself can be cleared out anytime without

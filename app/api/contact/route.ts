@@ -1,20 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { appendContactRow } from "../../lib/googleSheets";
+import { appendContactRow, formatReceivedAt } from "../../lib/googleSheets";
 import { recordReferral } from "../../lib/referrals";
-
-function formatReceivedAt(date: Date) {
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-  return formatted.replace(" AM", "am").replace(" PM", "pm");
-}
 
 export async function POST(request: Request) {
   const { businessName, phone, email, address, isStartup, services, message, referralCode } = await request.json();
