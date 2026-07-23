@@ -213,6 +213,7 @@ export default function ClientAccess() {
           setLoggedIn(true);
           setUserId(data.session.user.id);
           setEmail(data.session.user.email ?? "");
+          setBusinessName(data.session.user.user_metadata?.business_name ?? "");
           loadPlan(data.session.user.id);
           loadReferralCount();
         }
@@ -227,6 +228,7 @@ export default function ClientAccess() {
       if (session) {
         setUserId(session.user.id);
         setEmail(session.user.email ?? "");
+        setBusinessName(session.user.user_metadata?.business_name ?? "");
         loadPlan(session.user.id);
         loadReferralCount();
       } else {
@@ -607,7 +609,7 @@ export default function ClientAccess() {
             <Reveal className="ws-section-head" style={{ marginBottom: "0" }}>
               <span className="ws-eyebrow">Client access</span>
               <h2>
-                Welcome back{email ? `, ${email.split("@")[0]}` : ""}.
+                Welcome back{businessName ? `, ${businessName}` : email ? `, ${email.split("@")[0]}` : ""}.
               </h2>
               {email.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase() && (
                 <Link href="/admin" className="ws-btn-ghost">
