@@ -61,9 +61,25 @@ function CalendlyEmbed({ url }: { url: string }) {
     };
   }, [url, attempt]);
 
+  // Calendly posts its real content height to the parent page as it
+  // changes (picking a date, showing time slots, etc) — listening for
+  // that and resizing the container to match is Calendly's own
+  // documented fix for the widget otherwise needing its own internal
+  // scrollbar inside a fixed-height box.
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.origin !== "https://calendly.com") return;
+      if (e.data?.event === "calendly.page_height" && e.data.payload?.height && containerRef.current) {
+        containerRef.current.style.height = `${e.data.payload.height}px`;
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   return (
     <>
-      <div ref={containerRef} style={{ minWidth: "280px", height: "clamp(650px, 85vh, 950px)" }} />
+      <div ref={containerRef} style={{ minWidth: "280px", height: "900px" }} />
       {failed && (
         <p className="ws-portal-error">
           Couldn&rsquo;t load the calendar.{" "}
@@ -188,10 +204,10 @@ export default function Contact() {
           <span className="ws-eyebrow">Contact</span>
           <h2>Schedule a call.</h2>
           <p>
-            Pick a time that works below — but please{" "}
-            <a href="#request-pricing-form">fill out the form</a>{" "}
-            first with a few details on what you run and what you need, so we&rsquo;re not walking into
-            the call blind.
+            Pick a time that works below. If you&rsquo;d rather give us some details first, feel free
+            to{" "}
+            <a href="#request-pricing-form">fill out the form</a> — totally optional, not required to
+            book a call.
           </p>
           <p>
             Prefer email? Send us a message about our services directly at{" "}
@@ -205,9 +221,9 @@ export default function Contact() {
           <span className="ws-eyebrow">Or talk it through</span>
           <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule a call</h3>
           <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
-            Free, no pressure — just a quick conversation about what your business needs. Please{" "}
-            <a href="#request-pricing-form">fill out the form below</a>{" "}
-            before your call so we know a bit about your business first.
+            Free, no pressure — just a quick conversation about what your business needs. Want to{" "}
+            <a href="#request-pricing-form">fill out the form below</a> first? Totally optional, but it
+            helps.
           </p>
           {CALENDLY_URL ? (
             <CalendlyEmbed url={CALENDLY_URL} />
