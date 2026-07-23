@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
+import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
 import SiteFooter from "../components/SiteFooter";
@@ -103,6 +103,7 @@ export default function ClientAccess() {
   const [myReferralCode, setMyReferralCode] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [quickMessage, setQuickMessage] = useState("");
+  const quickMessageRef = useRef<HTMLTextAreaElement>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageSent, setMessageSent] = useState(false);
   const [messageError, setMessageError] = useState("");
@@ -167,6 +168,12 @@ export default function ClientAccess() {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2500);
     });
+  };
+
+  const goToQuickMessage = (prefill: string) => {
+    setQuickMessage(prefill);
+    quickMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    quickMessageRef.current?.focus();
   };
 
   const sendQuickMessage = async () => {
@@ -659,6 +666,7 @@ export default function ClientAccess() {
                 hosting/security/technical issues, use the IT help box instead.
               </p>
               <textarea
+                ref={quickMessageRef}
                 className="ws-portal-message-input"
                 rows={3}
                 placeholder="What's up?"
@@ -749,9 +757,17 @@ export default function ClientAccess() {
                         <p className="ws-plan-contact-note">
                           Curious about pricing for {plan.name}? Reach out any time.
                         </p>
-                        <Link href="/contact" className="ws-btn-ghost">
-                          Contact to change plan
-                        </Link>
+                        <button
+                          type="button"
+                          className="ws-btn-ghost"
+                          onClick={() =>
+                            goToQuickMessage(
+                              `I'd like to switch to ${plan.name} — can we talk about pricing/timing?`
+                            )
+                          }
+                        >
+                          Message about this plan
+                        </button>
                       </>
                     ) : (
                       <button
@@ -768,9 +784,13 @@ export default function ClientAccess() {
             </div>
             <p className="ws-portal-signup-note">
               Need to cancel instead?{" "}
-              <Link href="/contact" className="ws-btn-ghost">
-                Contact your account manager
-              </Link>
+              <button
+                type="button"
+                className="ws-btn-ghost"
+                onClick={() => goToQuickMessage("I'd like to cancel my subscription — can we discuss?")}
+              >
+                Message your account manager
+              </button>
               .
             </p>
           </section>
