@@ -2,12 +2,79 @@
 
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import SiteNav from "../components/SiteNav";
 import SiteFooter from "../components/SiteFooter";
 import "../globals.css";
 
 const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL;
+const CALENDLY_SCRIPT_SRC = "https://assets.calendly.com/assets/external/widget.js";
+
+// Calendly's own embed snippet only scans the page for widget divs once,
+// when its script first executes — fine for a static HTML page, but on a
+// Next.js client-side navigation the script may already be cached/loaded
+// from an earlier page, so it never re-scans and the widget stays empty
+// until a hard refresh. Calling Calendly's own initInlineWidget API
+// ourselves on every mount fixes that, with a manual "Refresh" fallback
+// in case the script itself fails to load (e.g. blocked by the network).
+function CalendlyEmbed({ url }: { url: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFailed(false);
+
+    const init = () => {
+      if (cancelled) return;
+      const container = containerRef.current;
+      const Calendly = (window as any).Calendly;
+      if (!container || !Calendly) return;
+      container.innerHTML = "";
+      Calendly.initInlineWidget({ url, parentElement: container });
+    };
+
+    if ((window as any).Calendly) {
+      init();
+      return;
+    }
+
+    let script = document.querySelector<HTMLScriptElement>(`script[src="${CALENDLY_SCRIPT_SRC}"]`);
+    if (!script) {
+      script = document.createElement("script");
+      script.src = CALENDLY_SCRIPT_SRC;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    const handleLoad = () => init();
+    const handleError = () => {
+      if (!cancelled) setFailed(true);
+    };
+    script.addEventListener("load", handleLoad);
+    script.addEventListener("error", handleError);
+
+    return () => {
+      cancelled = true;
+      script?.removeEventListener("load", handleLoad);
+      script?.removeEventListener("error", handleError);
+    };
+  }, [url, attempt]);
+
+  return (
+    <>
+      <div ref={containerRef} style={{ minWidth: "280px", height: "700px" }} />
+      {failed && (
+        <p className="ws-portal-error">
+          Couldn&rsquo;t load the calendar.{" "}
+          <button type="button" className="ws-btn-ghost" onClick={() => setAttempt((n) => n + 1)}>
+            Refresh
+          </button>
+        </p>
+      )}
+    </>
+  );
+}
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
   const ref = useRef<T | null>(null);
@@ -141,10 +208,7 @@ export default function Contact() {
             <a href="#request-pricing-form">Prefer a form instead? ↓</a>
           </p>
           {CALENDLY_URL ? (
-            <>
-              <div className="calendly-inline-widget" data-url={CALENDLY_URL} style={{ minWidth: "280px", height: "700px" }} />
-              <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="lazyOnload" />
-            </>
+            <CalendlyEmbed url={CALENDLY_URL} />
           ) : (
             <p className="ws-portal-error">
               Scheduling isn&rsquo;t connected yet — add NEXT_PUBLIC_CALENDLY_URL to enable it.
