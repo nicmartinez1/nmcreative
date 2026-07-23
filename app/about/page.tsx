@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
+import SiteFooter from "../components/SiteFooter";
 import "../globals.css";
 
 function useReveal<T extends HTMLElement>(threshold = 0.2) {
@@ -133,15 +134,7 @@ export default function About() {
         </Reveal>
       </section>
 
-      <footer className="ws-footer">
-        <span className="ws-footer-brand">
-          <span className="ws-logo-crop ws-logo-crop-sm">
-            <img src="/assets/webskilletlogo.png" alt="" className="ws-logo-full" />
-          </span>
-          © {new Date().getFullYear()} Web Skillet
-        </span>
-        <span>Web design · Social Media · Ads · SEO</span>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
+import SiteFooter from "../components/SiteFooter";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import "../globals.css";
 
@@ -924,15 +925,7 @@ export default function Admin() {
         </>
       )}
 
-      <footer className="ws-footer">
-        <span className="ws-footer-brand">
-          <span className="ws-logo-crop ws-logo-crop-sm">
-            <img src="/assets/webskilletlogo.png" alt="" className="ws-logo-full" />
-          </span>
-          © {new Date().getFullYear()} Web Skillet
-        </span>
-        <span>Web design · Social Media · Ads · SEO</span>
-      </footer>
+      <SiteFooter />
 
       {pendingChange && (
         <div className="ws-confirm-overlay" onClick={() => setPendingChange(null)}>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, type ReactNode, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
+import SiteFooter from "../components/SiteFooter";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import "../globals.css";
 
@@ -650,10 +651,10 @@ export default function ClientAccess() {
             </Reveal>
 
             <Reveal delay={80} className="ws-portal-card">
-              <h3>Need support?</h3>
+              <h3>Message your account manager</h3>
               <p>
-                Bug, question, or a small change you need made — send it straight over, no form to fill
-                out.
+                Questions about your plan, a content update, or anything marketing-related — for
+                hosting/security/technical issues, use the IT help box instead.
               </p>
               <textarea
                 className="ws-portal-message-input"
@@ -774,15 +775,7 @@ export default function ClientAccess() {
         </>
       )}
 
-      <footer className="ws-footer">
-        <span className="ws-footer-brand">
-          <span className="ws-logo-crop ws-logo-crop-sm">
-            <img src="/assets/webskilletlogo.png" alt="" className="ws-logo-full" />
-          </span>
-          © {new Date().getFullYear()} Web Skillet
-        </span>
-        <span>Web design · Social Media · Ads · SEO</span>
-      </footer>
+      <SiteFooter />
 
       {switchConfirmation && (
         <Toast planName={switchConfirmation} onDismiss={() => setSwitchConfirmation("")} />

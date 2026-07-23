@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties,
 import Link from "next/link";
 import Script from "next/script";
 import SiteNav from "../components/SiteNav";
+import SiteFooter from "../components/SiteFooter";
 import "../globals.css";
 
 const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL;
@@ -123,6 +124,10 @@ export default function Contact() {
             A few details on what you run and what you need, and we&rsquo;ll
             reply with a plan and a rough price, not a sales pitch.
           </p>
+          <p>
+            Prefer email? Send us a message about our services directly at{" "}
+            <a href="mailto:webskillet.net@gmail.com">webskillet.net@gmail.com</a>.
+          </p>
         </Reveal>
       </header>
 
@@ -223,7 +228,7 @@ export default function Contact() {
       <section className="ws-section" style={{ paddingTop: 0 }}>
         <div className="ws-form-card ws-form-card-static" style={{ maxWidth: "56rem" }}>
           <span className="ws-eyebrow">Or talk it through</span>
-          <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule an intro call</h3>
+          <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule a call</h3>
           <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
             Free, no pressure — just a quick conversation about what your business needs.
           </p>
@@ -240,15 +245,7 @@ export default function Contact() {
         </div>
       </section>
 
-      <footer className="ws-footer">
-        <span className="ws-footer-brand">
-          <span className="ws-logo-crop ws-logo-crop-sm">
-            <img src="/assets/webskilletlogo.png" alt="" className="ws-logo-full" />
-          </span>
-          © {new Date().getFullYear()} Web Skillet
-        </span>
-        <span>Web design · Social Media · Ads · SEO</span>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
