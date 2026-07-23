@@ -63,7 +63,7 @@ function CalendlyEmbed({ url }: { url: string }) {
 
   return (
     <>
-      <div ref={containerRef} style={{ minWidth: "280px", height: "700px" }} />
+      <div ref={containerRef} style={{ minWidth: "280px", height: "clamp(650px, 85vh, 950px)" }} />
       {failed && (
         <p className="ws-portal-error">
           Couldn&rsquo;t load the calendar.{" "}
@@ -188,9 +188,10 @@ export default function Contact() {
           <span className="ws-eyebrow">Contact</span>
           <h2>Schedule a call.</h2>
           <p>
-            Pick a time that works below, or skip straight to the{" "}
-            <a href="#request-pricing-form">form</a> with a few details on what you run and what you
-            need — we&rsquo;ll reply with a plan and a rough price, not a sales pitch.
+            Pick a time that works below — but please{" "}
+            <a href="#request-pricing-form">fill out the form</a>{" "}
+            first with a few details on what you run and what you need, so we&rsquo;re not walking into
+            the call blind.
           </p>
           <p>
             Prefer email? Send us a message about our services directly at{" "}
@@ -204,8 +205,9 @@ export default function Contact() {
           <span className="ws-eyebrow">Or talk it through</span>
           <h3 style={{ margin: "0.4rem 0 0.5rem" }}>Schedule a call</h3>
           <p style={{ marginBottom: "1.25rem", color: "rgba(21, 14, 40, 0.68)" }}>
-            Free, no pressure — just a quick conversation about what your business needs.{" "}
-            <a href="#request-pricing-form">Prefer a form instead? ↓</a>
+            Free, no pressure — just a quick conversation about what your business needs. Please{" "}
+            <a href="#request-pricing-form">fill out the form below</a>{" "}
+            before your call so we know a bit about your business first.
           </p>
           {CALENDLY_URL ? (
             <CalendlyEmbed url={CALENDLY_URL} />
