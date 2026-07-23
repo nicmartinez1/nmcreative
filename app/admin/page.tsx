@@ -25,8 +25,8 @@ function formatDate(iso: string) {
 
 type Client = {
   email: string;
-  current_plan: string;
-  plan_since: string;
+  current_plan: string | null;
+  plan_since: string | null;
   business_name: string | null;
   has_website: boolean;
   has_subscription: boolean;
@@ -63,7 +63,7 @@ type ContactMessage = {
 };
 
 type LastAction =
-  | { kind: "plan"; label: string; email: string; previousPlan: string }
+  | { kind: "plan"; label: string; email: string; previousPlan: string | null }
   | {
       kind: "billing";
       label: string;
@@ -286,11 +286,12 @@ export default function Admin() {
     setChangingPlan(true);
     setChangeError("");
 
-    const previousPlan = clients?.find((c) => c.email === pendingChange.email)?.current_plan;
-    if (!previousPlan) {
+    const clientRecord = clients?.find((c) => c.email === pendingChange.email);
+    if (!clientRecord) {
       setChangingPlan(false);
       return;
     }
+    const previousPlan = clientRecord.current_plan;
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -322,11 +323,12 @@ export default function Admin() {
     setChangingPlan(true);
     setChangeError("");
 
-    const previousPlan = clients?.find((c) => c.email === pendingRemoval)?.current_plan;
-    if (!previousPlan) {
+    const clientRecord = clients?.find((c) => c.email === pendingRemoval);
+    if (!clientRecord || !clientRecord.current_plan) {
       setChangingPlan(false);
       return;
     }
+    const previousPlan = clientRecord.current_plan;
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -424,11 +426,20 @@ export default function Admin() {
     const token = sessionData.session?.access_token;
 
     if (lastAction.kind === "plan") {
-      await fetch("/api/admin/set-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: lastAction.email, planName: lastAction.previousPlan }),
-      });
+      if (lastAction.previousPlan) {
+        await fetch("/api/admin/set-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ email: lastAction.email, planName: lastAction.previousPlan }),
+        });
+      } else {
+        // They had no plan before this action — undo means clearing it again.
+        await fetch("/api/admin/remove-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ email: lastAction.email }),
+        });
+      }
     } else {
       await fetch("/api/admin/set-billing", {
         method: "POST",
@@ -472,6 +483,7 @@ export default function Admin() {
   };
 
   const planCounts = (clients ?? []).reduce<Record<string, number>>((acc, c) => {
+    if (!c.current_plan) return acc;
     acc[c.current_plan] = (acc[c.current_plan] ?? 0) + 1;
     return acc;
   }, {});
@@ -687,13 +699,18 @@ export default function Admin() {
                           <td>
                             <select
                               className="ws-admin-plan-select"
-                              value={c.current_plan}
+                              value={c.current_plan ?? ""}
                               onChange={(e) => {
                                 if (e.target.value !== c.current_plan) {
                                   setPendingChange({ email: c.email, planName: e.target.value });
                                 }
                               }}
                             >
+                              {!c.current_plan && (
+                                <option value="" disabled hidden>
+                                  No plan yet
+                                </option>
+                              )}
                               {PLAN_NAMES.map((p) => (
                                 <option key={p} value={p}>
                                   {p}
@@ -751,11 +768,12 @@ export default function Admin() {
                               }
                             />
                           </td>
-                          <td>{formatDate(c.plan_since)}</td>
+                          <td>{c.plan_since ? formatDate(c.plan_since) : "—"}</td>
                           <td>
                             <button
                               type="button"
                               className="ws-btn-ghost"
+                              disabled={!c.current_plan}
                               onClick={() => setPendingRemoval(c.email)}
                             >
                               Remove

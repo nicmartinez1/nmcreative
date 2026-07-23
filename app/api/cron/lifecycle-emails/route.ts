@@ -12,8 +12,8 @@ const FEEDBACK_AFTER_DAYS = 14;
 type ClientRow = {
   user_id: string;
   email: string;
-  current_plan: string;
-  plan_since: string;
+  current_plan: string | null;
+  plan_since: string | null;
   has_subscription: boolean;
   website_completed_at: string | null;
   checkin_email_sent_at: string | null;
@@ -83,18 +83,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const clients = data as ClientRow[];
+  const clients = (data as ClientRow[]).filter((c) => c.email.toLowerCase() !== ADMIN_EMAIL);
 
   for (const c of clients) {
     // Recurring "how's it going / want to upgrade" check-in, once per
     // plan tenure — resets automatically whenever plan_since moves
-    // forward (i.e. they switch plans again).
-    const planSinceMs = new Date(c.plan_since).getTime();
-    const dueForCheckin = now - planSinceMs >= CHECKIN_AFTER_DAYS * DAY_MS;
+    // forward (i.e. they switch plans again). Skipped entirely for
+    // clients with no plan yet (plan_since null).
+    const planSinceMs = c.plan_since ? new Date(c.plan_since).getTime() : null;
+    const dueForCheckin = planSinceMs !== null && now - planSinceMs >= CHECKIN_AFTER_DAYS * DAY_MS;
     const alreadySentThisCycle =
-      c.checkin_email_sent_at && new Date(c.checkin_email_sent_at).getTime() >= planSinceMs;
+      planSinceMs !== null && c.checkin_email_sent_at && new Date(c.checkin_email_sent_at).getTime() >= planSinceMs;
 
-    if (c.has_subscription && dueForCheckin && !alreadySentThisCycle) {
+    if (c.has_subscription && c.current_plan && dueForCheckin && !alreadySentThisCycle) {
       const result = await sendEmail({
         to: c.email,
         subject: "How's everything going?",

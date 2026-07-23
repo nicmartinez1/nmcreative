@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabaseAdmin
     .from("client_current_plans")
     .select("*")
-    .order("plan_since", { ascending: false });
+    .order("plan_since", { ascending: false, nullsFirst: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -37,10 +37,14 @@ export async function GET(request: Request) {
     ])
   );
 
-  const clients = data.map((c) => ({
-    ...c,
-    business_name: businessNameByEmail.get(c.email?.toLowerCase()) || null,
-  }));
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+
+  const clients = data
+    .filter((c) => c.email?.toLowerCase() !== adminEmail)
+    .map((c) => ({
+      ...c,
+      business_name: businessNameByEmail.get(c.email?.toLowerCase()) || null,
+    }));
 
   return NextResponse.json({ clients });
 }

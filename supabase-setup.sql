@@ -84,10 +84,17 @@ create policy "Clients can view their own profile"
 -- set website_completed_at = now() - interval '15 days'
 -- where has_website = true and website_completed_at is null;
 
--- Admin view: one row per client showing their CURRENT plan (the most
--- recent entry in plan_changes), their billing details, and their
--- email. Query this anytime from the SQL Editor to see who's on what
--- plan and what they're actually paying.
+-- Admin view: one row per SIGNED-UP CLIENT (driven by auth.users, not
+-- plan_changes) showing their current plan if they have one yet, their
+-- billing details, and their email. Query this anytime from the SQL
+-- Editor to see who's on what plan and what they're actually paying.
+--
+-- Driven by auth.users (left-joined to their latest plan_changes row,
+-- if any) rather than inner-joined from plan_changes, so a brand new
+-- signup who hasn't picked/been given a plan yet still shows up —
+-- current_plan and plan_since just come back null for them. An
+-- earlier version of this view joined FROM plan_changes, which meant
+-- new signups with no plan were invisible in the admin dashboard.
 --
 -- "create or replace view" can only APPEND new columns at the end —
 -- inserting has_subscription before monthly_amount counts as renaming
@@ -95,8 +102,8 @@ create policy "Clients can view their own profile"
 -- whenever the column list changes shape, then recreate it:
 drop view if exists public.client_current_plans;
 create view public.client_current_plans as
-select distinct on (pc.user_id)
-  pc.user_id,
+select
+  u.id as user_id,
   u.email,
   pc.plan_name as current_plan,
   pc.changed_at as plan_since,
@@ -106,10 +113,15 @@ select distinct on (pc.user_id)
   cp.website_completed_at,
   cp.checkin_email_sent_at,
   cp.feedback_email_sent_at
-from public.plan_changes pc
-join auth.users u on u.id = pc.user_id
-left join public.client_profiles cp on cp.user_id = pc.user_id
-order by pc.user_id, pc.changed_at desc;
+from auth.users u
+left join lateral (
+  select plan_name, changed_at
+  from public.plan_changes
+  where user_id = u.id
+  order by changed_at desc
+  limit 1
+) pc on true
+left join public.client_profiles cp on cp.user_id = u.id;
 
 -- Locked down to the SQL Editor / dashboard only — not exposed through
 -- the public API, so client emails and plans can't be fetched by anyone
