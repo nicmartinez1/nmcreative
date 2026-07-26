@@ -455,9 +455,9 @@ export default function WebSkillet() {
               Built page by page. Grown post by post. Proven click by click.
             </Reveal>
             <Reveal delay={200} className="ws-hero-sub">
-              We build fast, modern websites, optimize them to rank on Google, and run the social and
-              ad campaigns that bring customers through the door — all built specifically to grow your
-              business.
+              We build fast, reliable, fully customizable websites with SEO optimization built in from
+              day one — plus complete marketing services like ad campaigns and social media management,
+              all under one roof to grow your business.
             </Reveal>
             <Reveal delay={240} className="ws-hero-actions">
               <Link href="/contact" className="ws-btn-primary">
