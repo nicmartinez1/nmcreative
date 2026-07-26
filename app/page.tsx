@@ -455,8 +455,9 @@ export default function WebSkillet() {
               Built page by page. Grown post by post. Proven click by click.
             </Reveal>
             <Reveal delay={200} className="ws-hero-sub">
-              We&rsquo;re the one studio building your website, social, and SEO together — so they
-              reinforce each other instead of quietly competing for the same growth.
+              We build fast, modern websites, optimize them to rank on Google, and run the social and
+              ad campaigns that bring customers through the door — all built specifically to grow your
+              business.
             </Reveal>
             <Reveal delay={240} className="ws-hero-actions">
               <Link href="/contact" className="ws-btn-primary">
