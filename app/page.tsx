@@ -455,9 +455,8 @@ export default function WebSkillet() {
               Built page by page. Grown post by post. Proven click by click.
             </Reveal>
             <Reveal delay={200} className="ws-hero-sub">
-              Web Skillet is the studio that builds all three at once, so your
-              site, your feed, and your search rankings stop working against
-              each other and start compounding.
+              We&rsquo;re the one studio building your website, social, and SEO together — so they
+              reinforce each other instead of quietly competing for the same growth.
             </Reveal>
             <Reveal delay={240} className="ws-hero-actions">
               <Link href="/contact" className="ws-btn-primary">
