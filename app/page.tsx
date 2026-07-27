@@ -456,7 +456,7 @@ export default function WebSkillet() {
             </Reveal>
             <Reveal delay={200} className="ws-hero-sub">
               We build fast, reliable, fully customizable websites with SEO optimization built in from
-              day one — plus complete marketing services like ad campaigns and social media management,
+              day one, plus complete marketing services like ad campaigns and social media management,
               all under one roof to grow your business.
             </Reveal>
             <Reveal delay={240} className="ws-hero-actions">
